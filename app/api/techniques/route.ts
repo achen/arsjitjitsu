@@ -30,12 +30,12 @@ export async function GET(request: NextRequest) {
 
     const techniques = await prisma.technique.findMany({
       where,
-      include: user ? {
-        ratings: {
+      include: {
+        ratings: user ? {
           where: { userId: user.id },
           select: { rating: true, notes: true },
-        },
-      } : false,
+        } : false,
+      },
       orderBy: [
         { position: 'asc' },
         { type: 'asc' },
