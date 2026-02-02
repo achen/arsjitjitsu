@@ -33,8 +33,12 @@ export async function GET(request: NextRequest) {
       include: {
         ratings: user ? {
           where: { userId: user.id },
-          select: { rating: true, notes: true },
+          select: { rating: true, notes: true, workingOn: true },
         } : false,
+        videos: {
+          select: { id: true, title: true, url: true, instructor: true, duration: true },
+          orderBy: { createdAt: 'asc' },
+        },
       },
       orderBy: [
         { position: 'asc' },
@@ -43,7 +47,7 @@ export async function GET(request: NextRequest) {
       ],
     });
 
-    const formattedTechniques: TechniqueWithRating[] = techniques.map(tech => ({
+    const formattedTechniques = techniques.map(tech => ({
       id: tech.id,
       name: tech.name,
       position: tech.position,
@@ -53,6 +57,8 @@ export async function GET(request: NextRequest) {
       createdAt: tech.createdAt,
       rating: tech.ratings?.[0]?.rating ?? null,
       notes: tech.ratings?.[0]?.notes ?? null,
+      workingOn: tech.ratings?.[0]?.workingOn ?? false,
+      videos: tech.videos || [],
     }));
 
     return NextResponse.json({ techniques: formattedTechniques });

@@ -12,18 +12,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { techniqueId, rating, notes } = await request.json();
+    const { techniqueId, rating, notes, workingOn } = await request.json();
 
-    if (!techniqueId || rating === undefined) {
+    if (!techniqueId) {
       return NextResponse.json(
-        { error: 'Technique ID and rating are required' },
-        { status: 400 }
-      );
-    }
-
-    if (rating < 0 || rating > 7) {
-      return NextResponse.json(
-        { error: 'Rating must be between 0 and 7' },
+        { error: 'Technique ID is required' },
         { status: 400 }
       );
     }
@@ -40,29 +33,41 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Build update/create data
+    const data: any = {};
+    if (rating !== undefined) {
+      if (rating < 0 || rating > 7) {
+        return NextResponse.json(
+          { error: 'Rating must be between 0 and 7' },
+          { status: 400 }
+        );
+      }
+      data.rating = rating;
+    }
+    if (notes !== undefined) data.notes = notes || null;
+    if (workingOn !== undefined) data.workingOn = workingOn;
+
     // Upsert rating
-    await prisma.userRating.upsert({
+    const result = await prisma.userRating.upsert({
       where: {
         userId_techniqueId: {
           userId: user.id,
           techniqueId,
         },
       },
-      update: {
-        rating,
-        notes: notes || null,
-      },
+      update: data,
       create: {
         userId: user.id,
         techniqueId,
-        rating,
+        rating: rating ?? 0,
         notes: notes || null,
+        workingOn: workingOn ?? false,
       },
     });
 
     return NextResponse.json({
       message: 'Rating saved successfully',
-      rating: { techniqueId, rating, notes },
+      rating: { techniqueId, rating: result.rating, notes: result.notes, workingOn: result.workingOn },
     });
   } catch (error) {
     console.error('Save rating error:', error);

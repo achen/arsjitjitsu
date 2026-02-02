@@ -24,18 +24,33 @@ model User {
 }
 
 model Technique {
-  id          String       @id @default(uuid())
+  id          String            @id @default(uuid())
   name        String
   position    String
   type        String
   description String?
-  giType      String       @default("both") @map("gi_type")
-  createdAt   DateTime     @default(now()) @map("created_at")
+  giType      String            @default("both") @map("gi_type")
+  createdAt   DateTime          @default(now()) @map("created_at")
   ratings     UserRating[]
+  videos      TechniqueVideo[]
 
   @@index([position])
   @@index([type])
   @@map("techniques")
+}
+
+model TechniqueVideo {
+  id          String    @id @default(uuid())
+  techniqueId String    @map("technique_id")
+  title       String
+  url         String
+  instructor  String?
+  duration    String?
+  createdAt   DateTime  @default(now()) @map("created_at")
+  technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+
+  @@index([techniqueId])
+  @@map("technique_videos")
 }
 
 model UserRating {
@@ -44,6 +59,7 @@ model UserRating {
   techniqueId String    @map("technique_id")
   rating      Int       @default(0)
   notes       String?
+  workingOn   Boolean   @default(false) @map("working_on")
   updatedAt   DateTime  @updatedAt @map("updated_at")
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)

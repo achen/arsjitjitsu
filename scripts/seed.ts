@@ -292,6 +292,69 @@ const techniques: Technique[] = [
   { name: 'Squid Guard Entry', position: 'Worm Guard', type: 'Transition', description: 'Move to squid guard', gi_type: 'gi' },
   { name: 'Worm Guard Entry', position: 'Worm Guard', type: 'Setup', description: 'Getting the lapel wrap', gi_type: 'gi' },
   { name: 'Omoplata', position: 'Worm Guard', type: 'Submission', description: 'Omoplata from worm guard', gi_type: 'gi' },
+
+  // Waiter Guard
+  { name: 'Waiter Sweep', position: 'Waiter Guard', type: 'Sweep', description: 'Classic waiter sweep lifting opponent overhead', gi_type: 'both' },
+  { name: 'Back Take', position: 'Waiter Guard', type: 'Transition', description: 'Spin under to take the back', gi_type: 'both' },
+  { name: 'Calf Slicer', position: 'Waiter Guard', type: 'Submission', description: 'Calf crush when opponent resists sweep', gi_type: 'both' },
+  { name: 'Toe Hold', position: 'Waiter Guard', type: 'Submission', description: 'Toe hold attack from waiter position', gi_type: 'both' },
+  { name: 'Kneebar', position: 'Waiter Guard', type: 'Submission', description: 'Kneebar from waiter guard', gi_type: 'both' },
+  { name: 'Waiter to X-Guard', position: 'Waiter Guard', type: 'Transition', description: 'Transition to X-Guard', gi_type: 'both' },
+  { name: 'Waiter to Single Leg X', position: 'Waiter Guard', type: 'Transition', description: 'Move to Single Leg X position', gi_type: 'both' },
+  { name: 'Overhead Sweep', position: 'Waiter Guard', type: 'Sweep', description: 'Throw opponent over your head', gi_type: 'both' },
+  { name: 'Waiter Entry from Half Guard', position: 'Waiter Guard', type: 'Setup', description: 'Enter waiter from half guard bottom', gi_type: 'both' },
+  { name: 'Waiter Entry from X-Guard', position: 'Waiter Guard', type: 'Setup', description: 'Enter waiter from X-Guard', gi_type: 'both' },
+  { name: 'Scissor Sweep', position: 'Waiter Guard', type: 'Sweep', description: 'Scissor motion sweep from waiter', gi_type: 'both' },
+  { name: 'Leg Drag Counter', position: 'Waiter Guard', type: 'Defense', description: 'Counter opponent attempting to leg drag', gi_type: 'both' },
+  { name: 'Heel Hook Entry', position: 'Waiter Guard', type: 'Transition', description: 'Transition to heel hook position', gi_type: 'both' },
+
+  // Butterfly Half
+  { name: 'Butterfly Half Sweep', position: 'Butterfly Half', type: 'Sweep', description: 'Hook sweep using butterfly hook in half guard', gi_type: 'both' },
+  { name: 'Elevator Sweep', position: 'Butterfly Half', type: 'Sweep', description: 'Elevate with butterfly hook to sweep', gi_type: 'both' },
+  { name: 'Back Take', position: 'Butterfly Half', type: 'Transition', description: 'Use underhook and hook to take back', gi_type: 'both' },
+  { name: 'Single Leg X Entry', position: 'Butterfly Half', type: 'Transition', description: 'Transition to single leg X', gi_type: 'both' },
+  { name: 'X-Guard Entry', position: 'Butterfly Half', type: 'Transition', description: 'Move to full X-Guard', gi_type: 'both' },
+  { name: 'Underhook Sweep', position: 'Butterfly Half', type: 'Sweep', description: 'Combine underhook with hook for sweep', gi_type: 'both' },
+  { name: 'Arm Drag', position: 'Butterfly Half', type: 'Transition', description: 'Arm drag to back take', gi_type: 'both' },
+  { name: 'Guillotine', position: 'Butterfly Half', type: 'Submission', description: 'Guillotine when opponent drives in', gi_type: 'both' },
+  { name: 'Kimura', position: 'Butterfly Half', type: 'Submission', description: 'Kimura attack from butterfly half', gi_type: 'both' },
+  { name: 'Dogfight', position: 'Butterfly Half', type: 'Transition', description: 'Come up to dogfight position', gi_type: 'both' },
+
+  // Lockdown
+  { name: 'Electric Chair Sweep', position: 'Lockdown', type: 'Sweep', description: 'Classic Eddie Bravo electric chair', gi_type: 'both' },
+  { name: 'Old School Sweep', position: 'Lockdown', type: 'Sweep', description: 'Whip up to sweep from lockdown', gi_type: 'both' },
+  { name: 'Plan B', position: 'Lockdown', type: 'Sweep', description: 'Sweep when they post', gi_type: 'both' },
+  { name: 'Vaporizer', position: 'Lockdown', type: 'Submission', description: 'Calf crank submission', gi_type: 'both' },
+  { name: 'Electric Chair Submission', position: 'Lockdown', type: 'Submission', description: 'Groin stretch submission', gi_type: 'both' },
+  { name: 'Whip Up', position: 'Lockdown', type: 'Setup', description: 'Use lockdown to stretch opponent', gi_type: 'both' },
+  { name: 'Dogfight Entry', position: 'Lockdown', type: 'Transition', description: 'Release lockdown to dogfight', gi_type: 'both' },
+  { name: 'Back Take', position: 'Lockdown', type: 'Transition', description: 'Take back from lockdown', gi_type: 'both' },
+  { name: 'Lockdown Entry', position: 'Lockdown', type: 'Setup', description: 'Securing the lockdown from half guard', gi_type: 'both' },
+  { name: 'Banana Split', position: 'Lockdown', type: 'Submission', description: 'Groin split from electric chair', gi_type: 'both' },
+
+  // Octopus Guard
+  { name: 'Octopus Sweep', position: 'Octopus Guard', type: 'Sweep', description: 'Classic octopus guard sweep', gi_type: 'both' },
+  { name: 'Back Take', position: 'Octopus Guard', type: 'Transition', description: 'Spin to back from octopus', gi_type: 'both' },
+  { name: 'Guillotine', position: 'Octopus Guard', type: 'Submission', description: 'Arm-in guillotine from octopus', gi_type: 'both' },
+  { name: 'Omoplata', position: 'Octopus Guard', type: 'Submission', description: 'Omoplata transition from octopus', gi_type: 'both' },
+  { name: 'Triangle', position: 'Octopus Guard', type: 'Submission', description: 'Triangle setup from octopus', gi_type: 'both' },
+  { name: 'Armbar', position: 'Octopus Guard', type: 'Submission', description: 'Armbar from octopus control', gi_type: 'both' },
+  { name: 'Octopus Entry from Half Guard', position: 'Octopus Guard', type: 'Setup', description: 'Enter octopus from half guard', gi_type: 'both' },
+  { name: 'Octopus Entry from Side Control', position: 'Octopus Guard', type: 'Setup', description: 'Recover to octopus from bottom side control', gi_type: 'both' },
+  { name: 'Hip Bump Sweep', position: 'Octopus Guard', type: 'Sweep', description: 'Hip bump to sweep from octopus', gi_type: 'both' },
+  { name: 'Underhook Control', position: 'Octopus Guard', type: 'Setup', description: 'Deep underhook control in octopus', gi_type: 'both' },
+
+  // High Ground (Officer Grimey)
+  { name: 'High Ground Entry', position: 'High Ground', type: 'Setup', description: 'Entering the high ground position', gi_type: 'both' },
+  { name: 'High Ground Sweep', position: 'High Ground', type: 'Sweep', description: 'Classic sweep from high ground', gi_type: 'both' },
+  { name: 'Back Take', position: 'High Ground', type: 'Transition', description: 'Take the back from high ground', gi_type: 'both' },
+  { name: 'Armbar', position: 'High Ground', type: 'Submission', description: 'Armbar attack from high ground', gi_type: 'both' },
+  { name: 'Triangle', position: 'High Ground', type: 'Submission', description: 'Triangle from high ground control', gi_type: 'both' },
+  { name: 'Omoplata', position: 'High Ground', type: 'Submission', description: 'Omoplata from high ground', gi_type: 'both' },
+  { name: 'Leg Entanglement Entry', position: 'High Ground', type: 'Transition', description: 'Transition to leg attacks', gi_type: 'both' },
+  { name: 'Mount Transition', position: 'High Ground', type: 'Transition', description: 'Come up to mount from high ground', gi_type: 'both' },
+  { name: 'Kimura', position: 'High Ground', type: 'Submission', description: 'Kimura grip attack from high ground', gi_type: 'both' },
+  { name: 'High Ground Retention', position: 'High Ground', type: 'Defense', description: 'Maintaining the high ground position', gi_type: 'both' },
 ];
 
 async function seed() {

@@ -15,6 +15,14 @@ export default prisma;
 // Re-export Prisma types for convenience
 export type { User, Technique, UserRating } from '@prisma/client';
 
+export interface TechniqueVideo {
+  id: string;
+  title: string;
+  url: string;
+  instructor: string | null;
+  duration: string | null;
+}
+
 export interface TechniqueWithRating {
   id: string;
   name: string;
@@ -25,6 +33,8 @@ export interface TechniqueWithRating {
   createdAt: Date;
   rating: number | null;
   notes: string | null;
+  workingOn: boolean;
+  videos: TechniqueVideo[];
 }
 
 // Position categories
@@ -48,6 +58,7 @@ export const POSITIONS = [
   'Single Leg X',
   '50/50',
   'Knee Shield',
+  'Waiter Guard',
   'Z-Guard',
   'Rubber Guard',
   'Worm Guard',

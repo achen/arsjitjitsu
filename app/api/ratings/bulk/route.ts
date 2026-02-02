@@ -1,25 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { verifyToken } from '@/lib/auth';
-import { cookies } from 'next/headers';
+import prisma from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 
 // POST /api/ratings/bulk - Create/update multiple ratings at once
 export async function POST(request: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get('auth-token')?.value;
-
-    if (!token) {
+    const user = await getCurrentUser();
+    if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },
-        { status: 401 }
-      );
-    }
-
-    const payload = verifyToken(token);
-    if (!payload) {
-      return NextResponse.json(
-        { error: 'Invalid token' },
         { status: 401 }
       );
     }
@@ -60,7 +49,7 @@ export async function POST(request: NextRequest) {
         prisma.userRating.upsert({
           where: {
             userId_techniqueId: {
-              userId: payload.userId,
+              userId: user.id,
               techniqueId,
             },
           },
@@ -68,7 +57,7 @@ export async function POST(request: NextRequest) {
             rating,
           },
           create: {
-            userId: payload.userId,
+            userId: user.id,
             techniqueId,
             rating,
           },

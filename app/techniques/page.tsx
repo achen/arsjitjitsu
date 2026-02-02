@@ -2,7 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink } from 'lucide-react';
+
+interface TechniqueVideo {
+  id: string;
+  title: string;
+  url: string;
+  instructor: string | null;
+  duration: string | null;
+}
 
 interface Technique {
   id: string;
@@ -12,6 +20,8 @@ interface Technique {
   description: string | null;
   rating: number | null;
   notes: string | null;
+  workingOn: boolean;
+  videos: TechniqueVideo[];
 }
 
 interface User {
@@ -22,9 +32,10 @@ interface User {
 const POSITIONS = [
   'Mount Top', 'Mount Bottom', 'Side Control Top', 'Side Control Bottom',
   'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
-  'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'De La Riva Guard',
-  'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'X-Guard', 'Single Leg X',
-  '50/50', 'Knee Shield', 'Z-Guard', 'Rubber Guard', 'Worm Guard', 'Standing',
+  'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'Butterfly Half',
+  'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'X-Guard', 'Single Leg X',
+  '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground',
+  'Rubber Guard', 'Worm Guard', 'Waiter Guard', 'Standing',
   'Turtle Top', 'Turtle Bottom', 'North-South Top', 'North-South Bottom',
   'Knee on Belly', 'Crucifix', 'Leg Entanglement'
 ];
@@ -34,14 +45,14 @@ const TYPES = [
 ];
 
 const RATING_OPTIONS = [
-  { value: 0, label: "0 - Don't know it" },
-  { value: 1, label: "1 - White belts" },
-  { value: 2, label: "2 - Blue belts" },
-  { value: 3, label: "3 - Purple belts" },
-  { value: 4, label: "4 - Brown belts" },
-  { value: 5, label: "5 - Black belts" },
-  { value: 6, label: "6 - Competition BBs" },
-  { value: 7, label: "7 - World class" },
+  { value: 0, label: "Don't know it" },
+  { value: 1, label: "White belt" },
+  { value: 2, label: "Blue belt" },
+  { value: 3, label: "Purple belt" },
+  { value: 4, label: "Brown belt" },
+  { value: 5, label: "Black belt" },
+  { value: 6, label: "Competition black belt" },
+  { value: 7, label: "World class black belt" },
 ];
 
 export default function TechniquesPage() {
@@ -58,6 +69,54 @@ export default function TechniquesPage() {
   const [selectedTechniques, setSelectedTechniques] = useState<Set<string>>(new Set());
   const [bulkRating, setBulkRating] = useState<number | ''>('');
   const [savingBulk, setSavingBulk] = useState(false);
+  
+  // Collapsed groups state (stored in localStorage)
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
+  const [showWorkingOnOnly, setShowWorkingOnOnly] = useState(false);
+  
+  // Expanded videos state
+  const [expandedVideos, setExpandedVideos] = useState<Set<string>>(new Set());
+
+  // Load collapsed groups from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('collapsedGroups');
+    if (saved) {
+      setCollapsedGroups(new Set(JSON.parse(saved)));
+    } else {
+      // All collapsed by default - will be set after techniques load
+    }
+  }, []);
+
+  // Set all groups collapsed by default when techniques first load
+  useEffect(() => {
+    if (techniques.length > 0 && !localStorage.getItem('collapsedGroups')) {
+      const allPositions = new Set(techniques.map(t => t.position));
+      setCollapsedGroups(allPositions);
+      localStorage.setItem('collapsedGroups', JSON.stringify([...allPositions]));
+    }
+  }, [techniques]);
+
+  const toggleGroupCollapse = (position: string) => {
+    const newCollapsed = new Set(collapsedGroups);
+    if (newCollapsed.has(position)) {
+      newCollapsed.delete(position);
+    } else {
+      newCollapsed.add(position);
+    }
+    setCollapsedGroups(newCollapsed);
+    localStorage.setItem('collapsedGroups', JSON.stringify([...newCollapsed]));
+  };
+
+  const expandAll = () => {
+    setCollapsedGroups(new Set());
+    localStorage.setItem('collapsedGroups', JSON.stringify([]));
+  };
+
+  const collapseAll = () => {
+    const allPositions = new Set(techniques.map(t => t.position));
+    setCollapsedGroups(allPositions);
+    localStorage.setItem('collapsedGroups', JSON.stringify([...allPositions]));
+  };
 
   useEffect(() => {
     checkAuth();
@@ -135,6 +194,7 @@ export default function TechniquesPage() {
       const res = await fetch('/api/ratings/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ 
           techniqueIds: selectedIdsArray, 
           rating: ratingValue 
@@ -192,6 +252,26 @@ export default function TechniquesPage() {
     }
   };
 
+  const toggleWorkingOn = async (techniqueId: string, currentValue: boolean) => {
+    if (!user) return;
+
+    try {
+      const res = await fetch('/api/ratings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ techniqueId, workingOn: !currentValue }),
+      });
+
+      if (res.ok) {
+        setTechniques(prev => prev.map(t => 
+          t.id === techniqueId ? { ...t, workingOn: !currentValue } : t
+        ));
+      }
+    } catch (error) {
+      console.error('Toggle working on error:', error);
+    }
+  };
+
   const getRatingColor = (rating: number | null) => {
     if (rating === null || rating === 0) return 'bg-gray-100 dark:bg-gray-700';
     if (rating === 1) return 'bg-gray-200 dark:bg-gray-600';
@@ -202,7 +282,13 @@ export default function TechniquesPage() {
     return 'bg-gray-100';
   };
 
-  const groupedTechniques = techniques.reduce((acc, technique) => {
+  // Separate working on techniques
+  const workingOnTechniques = techniques.filter(t => t.workingOn);
+  const filteredTechniques = showWorkingOnOnly 
+    ? workingOnTechniques 
+    : techniques;
+
+  const groupedTechniques = filteredTechniques.reduce((acc, technique) => {
     if (!acc[technique.position]) {
       acc[technique.position] = [];
     }
@@ -341,34 +427,74 @@ export default function TechniquesPage() {
             <p className="text-gray-600 dark:text-gray-400">No techniques found. Try adjusting your filters.</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Select All */}
-            {user && (
+          <div className="space-y-4">
+            {/* Controls Row */}
+            <div className="flex flex-wrap items-center gap-4 justify-between">
+              {/* Left side controls */}
+              <div className="flex items-center gap-4">
+                {user && (
+                  <button
+                    onClick={selectAll}
+                    className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  >
+                    {selectedTechniques.size === filteredTechniques.length ? (
+                      <CheckSquare size={18} className="text-blue-600" />
+                    ) : (
+                      <Square size={18} />
+                    )}
+                    Select all ({filteredTechniques.length})
+                  </button>
+                )}
+                
+                {/* Working On Filter */}
+                {user && workingOnTechniques.length > 0 && (
+                  <button
+                    onClick={() => setShowWorkingOnOnly(!showWorkingOnOnly)}
+                    className={`flex items-center gap-2 text-sm px-3 py-1.5 rounded-lg ${
+                      showWorkingOnOnly 
+                        ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' 
+                        : 'text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700'
+                    }`}
+                  >
+                    <Star size={16} className={showWorkingOnOnly ? 'fill-yellow-500' : ''} />
+                    Working On ({workingOnTechniques.length})
+                  </button>
+                )}
+              </div>
+              
+              {/* Expand/Collapse buttons */}
               <div className="flex items-center gap-2">
                 <button
-                  onClick={selectAll}
-                  className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                  onClick={expandAll}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
                 >
-                  {selectedTechniques.size === techniques.length ? (
-                    <CheckSquare size={18} className="text-blue-600" />
-                  ) : (
-                    <Square size={18} />
-                  )}
-                  Select all ({techniques.length})
+                  Expand All
+                </button>
+                <span className="text-gray-400">|</span>
+                <button
+                  onClick={collapseAll}
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
+                >
+                  Collapse All
                 </button>
               </div>
-            )}
+            </div>
 
             {Object.entries(groupedTechniques).map(([position, techs]) => {
               const allInPositionSelected = techs.every(t => selectedTechniques.has(t.id));
               const someInPositionSelected = techs.some(t => selectedTechniques.has(t.id));
+              const isCollapsed = collapsedGroups.has(position);
+              const workingOnCount = techs.filter(t => t.workingOn).length;
               
               return (
               <div key={position} className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
-                <div className="bg-gray-100 dark:bg-gray-700 px-4 py-3 flex items-center gap-3">
+                <button
+                  onClick={() => toggleGroupCollapse(position)}
+                  className="w-full bg-gray-100 dark:bg-gray-700 px-4 py-3 flex items-center gap-3 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
                   {user && (
-                    <button
-                      onClick={() => selectAllInPosition(position)}
+                    <div
+                      onClick={(e) => { e.stopPropagation(); selectAllInPosition(position); }}
                       className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
                     >
                       {allInPositionSelected ? (
@@ -378,12 +504,23 @@ export default function TechniquesPage() {
                       ) : (
                         <Square size={20} />
                       )}
-                    </button>
+                    </div>
                   )}
-                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                    {position} <span className="text-gray-500">({techs.length})</span>
-                  </h2>
-                </div>
+                  <div className="flex-1 flex items-center gap-2">
+                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white text-left">
+                      {position} <span className="text-gray-500">({techs.length})</span>
+                    </h2>
+                    {workingOnCount > 0 && (
+                      <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full">
+                        <Star size={12} className="fill-yellow-500" />
+                        {workingOnCount}
+                      </span>
+                    )}
+                  </div>
+                  {isCollapsed ? <ChevronDown size={20} className="text-gray-500" /> : <ChevronUp size={20} className="text-gray-500" />}
+                </button>
+                
+                {!isCollapsed && (
                 <div className="divide-y divide-gray-200 dark:divide-gray-700">
                   {techs.map((technique) => (
                     <div key={technique.id} className={`p-4 ${selectedTechniques.has(technique.id) ? 'bg-blue-50 dark:bg-blue-900/20' : ''}`}>
@@ -399,6 +536,17 @@ export default function TechniquesPage() {
                             ) : (
                               <Square size={20} />
                             )}
+                          </button>
+                        )}
+
+                        {/* Working On Star */}
+                        {user && (
+                          <button
+                            onClick={() => toggleWorkingOn(technique.id, technique.workingOn)}
+                            className={`flex-shrink-0 ${technique.workingOn ? 'text-yellow-500' : 'text-gray-300 hover:text-yellow-400'}`}
+                            title={technique.workingOn ? 'Remove from Working On' : 'Add to Working On'}
+                          >
+                            <Star size={20} className={technique.workingOn ? 'fill-yellow-500' : ''} />
                           </button>
                         )}
 
@@ -418,11 +566,55 @@ export default function TechniquesPage() {
                             <h3 className="font-medium text-gray-900 dark:text-white truncate">
                               {technique.name}
                             </h3>
+                            {/* Videos button */}
+                            {technique.videos && technique.videos.length > 0 && (
+                              <button
+                                onClick={() => {
+                                  const newExpanded = new Set(expandedVideos);
+                                  if (newExpanded.has(technique.id)) {
+                                    newExpanded.delete(technique.id);
+                                  } else {
+                                    newExpanded.add(technique.id);
+                                  }
+                                  setExpandedVideos(newExpanded);
+                                }}
+                                className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800"
+                              >
+                                <Play size={12} />
+                                {technique.videos.length} video{technique.videos.length > 1 ? 's' : ''}
+                              </button>
+                            )}
                           </div>
                           {technique.description && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
                               {technique.description}
                             </p>
+                          )}
+                          {/* Expanded Videos List */}
+                          {expandedVideos.has(technique.id) && technique.videos && technique.videos.length > 0 && (
+                            <div className="mt-3 space-y-2">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Instructionals:</p>
+                              {technique.videos.map(video => (
+                                <a
+                                  key={video.id}
+                                  href={video.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
+                                >
+                                  <Play size={16} className="text-red-600 flex-shrink-0" />
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{video.title}</p>
+                                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                                      {video.instructor && <span>{video.instructor}</span>}
+                                      {video.instructor && video.duration && <span> • </span>}
+                                      {video.duration && <span>{video.duration}</span>}
+                                    </p>
+                                  </div>
+                                  <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
+                                </a>
+                              ))}
+                            </div>
                           )}
                         </div>
 
@@ -447,6 +639,7 @@ export default function TechniquesPage() {
                     </div>
                   ))}
                 </div>
+                )}
               </div>
               );
             })}
