@@ -127,23 +127,29 @@ export default function TechniquesPage() {
   const saveBulkRatings = async () => {
     if (!user || bulkRating === '' || selectedTechniques.size === 0) return;
 
+    const ratingValue = Number(bulkRating);
+    const selectedIds = new Set(selectedTechniques);
+    
     setSavingBulk(true);
     try {
       const res = await fetch('/api/ratings/bulk', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          techniqueIds: Array.from(selectedTechniques), 
-          rating: bulkRating 
+          techniqueIds: Array.from(selectedIds), 
+          rating: ratingValue 
         }),
       });
 
       if (res.ok) {
-        setTechniques(techniques.map(t => 
-          selectedTechniques.has(t.id) ? { ...t, rating: bulkRating as number } : t
+        // Update techniques with the new rating
+        setTechniques(prev => prev.map(t => 
+          selectedIds.has(t.id) ? { ...t, rating: ratingValue } : t
         ));
         setSelectedTechniques(new Set());
         setBulkRating('');
+      } else {
+        console.error('Bulk save failed:', await res.text());
       }
     } catch (error) {
       console.error('Bulk save error:', error);
