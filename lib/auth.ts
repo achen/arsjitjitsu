@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import db, { User } from './db';
+import prisma, { User } from './db';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -30,10 +30,10 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
-export async function getCurrentUser(): Promise<Omit<User, 'password_hash'> | null> {
+export async function getCurrentUser(): Promise<Omit<User, 'passwordHash'> | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
-  
+
   if (!token) {
     return null;
   }
@@ -43,11 +43,17 @@ export async function getCurrentUser(): Promise<Omit<User, 'password_hash'> | nu
     return null;
   }
 
-  const user = db.prepare(`
-    SELECT id, email, name, belt, created_at, updated_at 
-    FROM users 
-    WHERE id = ?
-  `).get(payload.userId) as Omit<User, 'password_hash'> | undefined;
+  const user = await prisma.user.findUnique({
+    where: { id: payload.userId },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      belt: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+  });
 
   return user || null;
 }

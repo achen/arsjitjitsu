@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import db from '@/lib/db';
+import prisma from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -30,7 +29,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if technique exists
-    const technique = db.prepare('SELECT id FROM techniques WHERE id = ?').get(techniqueId);
+    const technique = await prisma.technique.findUnique({
+      where: { id: techniqueId },
+    });
+
     if (!technique) {
       return NextResponse.json(
         { error: 'Technique not found' },
@@ -39,15 +41,24 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert rating
-    const id = uuidv4();
-    db.prepare(`
-      INSERT INTO user_ratings (id, user_id, technique_id, rating, notes, updated_at)
-      VALUES (?, ?, ?, ?, ?, datetime('now'))
-      ON CONFLICT(user_id, technique_id) DO UPDATE SET
-        rating = excluded.rating,
-        notes = excluded.notes,
-        updated_at = datetime('now')
-    `).run(id, user.id, techniqueId, rating, notes || null);
+    await prisma.userRating.upsert({
+      where: {
+        userId_techniqueId: {
+          userId: user.id,
+          techniqueId,
+        },
+      },
+      update: {
+        rating,
+        notes: notes || null,
+      },
+      create: {
+        userId: user.id,
+        techniqueId,
+        rating,
+        notes: notes || null,
+      },
+    });
 
     return NextResponse.json({
       message: 'Rating saved successfully',
@@ -72,17 +83,19 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const ratings = db.prepare(`
-      SELECT 
-        ur.*,
-        t.name as technique_name,
-        t.position,
-        t.type
-      FROM user_ratings ur
-      JOIN techniques t ON ur.technique_id = t.id
-      WHERE ur.user_id = ?
-      ORDER BY ur.updated_at DESC
-    `).all(user.id);
+    const ratings = await prisma.userRating.findMany({
+      where: { userId: user.id },
+      include: {
+        technique: {
+          select: {
+            name: true,
+            position: true,
+            type: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
 
     return NextResponse.json({ ratings });
   } catch (error) {

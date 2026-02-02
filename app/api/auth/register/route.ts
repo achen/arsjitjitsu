@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { v4 as uuidv4 } from 'uuid';
-import db, { User } from '@/lib/db';
+import prisma from '@/lib/db';
 import { hashPassword, createToken, setAuthCookie } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
@@ -15,7 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user exists
-    const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+    });
+
     if (existingUser) {
       return NextResponse.json(
         { error: 'Email already registered' },
@@ -24,19 +26,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Create user
-    const id = uuidv4();
     const passwordHash = await hashPassword(password);
 
-    db.prepare(`
-      INSERT INTO users (id, email, password_hash, name)
-      VALUES (?, ?, ?, ?)
-    `).run(id, email, passwordHash, name);
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        name,
+      },
+    });
 
     // Create token
-    const token = createToken({ userId: id, email });
+    const token = createToken({ userId: user.id, email: user.email });
 
     const response = NextResponse.json({
-      user: { id, email, name, belt: 'white' },
+      user: { id: user.id, email: user.email, name: user.name, belt: user.belt },
       message: 'Registration successful',
     });
 

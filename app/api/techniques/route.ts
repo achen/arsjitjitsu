@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import db, { Technique, TechniqueWithRating } from '@/lib/db';
+import prisma, { TechniqueWithRating } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
@@ -10,45 +10,52 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
 
     const user = await getCurrentUser();
-    
-    let query = `
-      SELECT 
-        t.*,
-        ${user ? 'ur.rating, ur.notes' : 'NULL as rating, NULL as notes'}
-      FROM techniques t
-    `;
 
-    if (user) {
-      query += ` LEFT JOIN user_ratings ur ON t.id = ur.technique_id AND ur.user_id = ?`;
-    }
-
-    const conditions: string[] = [];
-    const params: (string | number)[] = user ? [user.id] : [];
+    const where: any = {};
 
     if (position) {
-      conditions.push('t.position = ?');
-      params.push(position);
+      where.position = position;
     }
 
     if (type) {
-      conditions.push('t.type = ?');
-      params.push(type);
+      where.type = type;
     }
 
     if (search) {
-      conditions.push('(t.name LIKE ? OR t.description LIKE ?)');
-      params.push(`%${search}%`, `%${search}%`);
+      where.OR = [
+        { name: { contains: search, mode: 'insensitive' } },
+        { description: { contains: search, mode: 'insensitive' } },
+      ];
     }
 
-    if (conditions.length > 0) {
-      query += ` WHERE ${conditions.join(' AND ')}`;
-    }
+    const techniques = await prisma.technique.findMany({
+      where,
+      include: user ? {
+        ratings: {
+          where: { userId: user.id },
+          select: { rating: true, notes: true },
+        },
+      } : false,
+      orderBy: [
+        { position: 'asc' },
+        { type: 'asc' },
+        { name: 'asc' },
+      ],
+    });
 
-    query += ' ORDER BY t.position, t.type, t.name';
+    const formattedTechniques: TechniqueWithRating[] = techniques.map(tech => ({
+      id: tech.id,
+      name: tech.name,
+      position: tech.position,
+      type: tech.type,
+      description: tech.description,
+      giType: tech.giType,
+      createdAt: tech.createdAt,
+      rating: tech.ratings?.[0]?.rating ?? null,
+      notes: tech.ratings?.[0]?.notes ?? null,
+    }));
 
-    const techniques = db.prepare(query).all(...params) as TechniqueWithRating[];
-
-    return NextResponse.json({ techniques });
+    return NextResponse.json({ techniques: formattedTechniques });
   } catch (error) {
     console.error('Get techniques error:', error);
     return NextResponse.json(

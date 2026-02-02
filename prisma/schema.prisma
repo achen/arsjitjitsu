@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+}
+
+model User {
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String       @map("password_hash")
+  name         String
+  belt         String       @default("white")
+  createdAt    DateTime     @default(now()) @map("created_at")
+  updatedAt    DateTime     @updatedAt @map("updated_at")
+  ratings      UserRating[]
+
+  @@map("users")
+}
+
+model Technique {
+  id          String       @id @default(uuid())
+  name        String
+  position    String
+  type        String
+  description String?
+  giType      String       @default("both") @map("gi_type")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  ratings     UserRating[]
+
+  @@index([position])
+  @@index([type])
+  @@map("techniques")
+}
+
+model UserRating {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  techniqueId String    @map("technique_id")
+  rating      Int       @default(0)
+  notes       String?
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, techniqueId])
+  @@index([userId])
+  @@index([techniqueId])
+  @@map("user_ratings")
+}

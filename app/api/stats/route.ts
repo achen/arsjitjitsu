@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import db from '@/lib/db';
+import prisma from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 interface StatsRow {
@@ -21,64 +21,97 @@ export async function GET() {
       );
     }
 
-    // Get total score
-    const scoreResult = db.prepare(`
-      SELECT 
-        COALESCE(SUM(rating), 0) as total_score,
-        COUNT(*) as rated_techniques
-      FROM user_ratings
-      WHERE user_id = ?
-    `).get(user.id) as { total_score: number; rated_techniques: number };
+    // Get total score and rated techniques
+    const userRatings = await prisma.userRating.aggregate({
+      where: { userId: user.id },
+      _sum: { rating: true },
+      _count: true,
+    });
 
     // Get total techniques count
-    const totalResult = db.prepare('SELECT COUNT(*) as count FROM techniques').get() as { count: number };
+    const totalTechniques = await prisma.technique.count();
 
-    // Get score breakdown by position
-    const byPosition = db.prepare(`
-      SELECT 
-        t.position,
-        COUNT(t.id) as total_count,
-        COUNT(ur.id) as rated_count,
-        COALESCE(SUM(ur.rating), 0) as total_points,
-        ROUND(AVG(ur.rating), 2) as avg_rating
-      FROM techniques t
-      LEFT JOIN user_ratings ur ON t.id = ur.technique_id AND ur.user_id = ?
-      GROUP BY t.position
-      ORDER BY t.position
-    `).all(user.id) as StatsRow[];
+    // Get all techniques with their ratings for this user
+    const techniques = await prisma.technique.findMany({
+      include: {
+        ratings: {
+          where: { userId: user.id },
+        },
+      },
+    });
 
-    // Get score breakdown by type
-    const byType = db.prepare(`
-      SELECT 
-        t.type,
-        COUNT(t.id) as total_count,
-        COUNT(ur.id) as rated_count,
-        COALESCE(SUM(ur.rating), 0) as total_points,
-        ROUND(AVG(ur.rating), 2) as avg_rating
-      FROM techniques t
-      LEFT JOIN user_ratings ur ON t.id = ur.technique_id AND ur.user_id = ?
-      GROUP BY t.type
-      ORDER BY t.type
-    `).all(user.id) as StatsRow[];
+    // Calculate stats by position
+    const positionMap = new Map<string, StatsRow>();
+    techniques.forEach(tech => {
+      if (!positionMap.has(tech.position)) {
+        positionMap.set(tech.position, {
+          position: tech.position,
+          type: '',
+          total_count: 0,
+          rated_count: 0,
+          total_points: 0,
+          avg_rating: 0,
+        });
+      }
+      const stats = positionMap.get(tech.position)!;
+      stats.total_count++;
+      if (tech.ratings.length > 0) {
+        stats.rated_count++;
+        stats.total_points += tech.ratings[0].rating;
+      }
+    });
+
+    const byPosition = Array.from(positionMap.values()).map(stats => ({
+      ...stats,
+      avg_rating: stats.rated_count > 0 ? Math.round((stats.total_points / stats.rated_count) * 100) / 100 : 0,
+    })).sort((a, b) => a.position.localeCompare(b.position));
+
+    // Calculate stats by type
+    const typeMap = new Map<string, StatsRow>();
+    techniques.forEach(tech => {
+      if (!typeMap.has(tech.type)) {
+        typeMap.set(tech.type, {
+          position: '',
+          type: tech.type,
+          total_count: 0,
+          rated_count: 0,
+          total_points: 0,
+          avg_rating: 0,
+        });
+      }
+      const stats = typeMap.get(tech.type)!;
+      stats.total_count++;
+      if (tech.ratings.length > 0) {
+        stats.rated_count++;
+        stats.total_points += tech.ratings[0].rating;
+      }
+    });
+
+    const byType = Array.from(typeMap.values()).map(stats => ({
+      ...stats,
+      avg_rating: stats.rated_count > 0 ? Math.round((stats.total_points / stats.rated_count) * 100) / 100 : 0,
+    })).sort((a, b) => a.type.localeCompare(b.type));
 
     // Get recent activity
-    const recentRatings = db.prepare(`
-      SELECT 
-        ur.*,
-        t.name as technique_name,
-        t.position,
-        t.type
-      FROM user_ratings ur
-      JOIN techniques t ON ur.technique_id = t.id
-      WHERE ur.user_id = ?
-      ORDER BY ur.updated_at DESC
-      LIMIT 10
-    `).all(user.id);
+    const recentRatings = await prisma.userRating.findMany({
+      where: { userId: user.id },
+      include: {
+        technique: {
+          select: {
+            name: true,
+            position: true,
+            type: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: 'desc' },
+      take: 10,
+    });
 
     return NextResponse.json({
-      totalScore: scoreResult.total_score,
-      ratedTechniques: scoreResult.rated_techniques,
-      totalTechniques: totalResult.count,
+      totalScore: userRatings._sum.rating || 0,
+      ratedTechniques: userRatings._count,
+      totalTechniques,
       byPosition,
       byType,
       recentRatings,

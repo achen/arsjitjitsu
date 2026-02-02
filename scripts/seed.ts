@@ -1,51 +1,6 @@
-import Database from 'better-sqlite3';
-import * as crypto from 'crypto';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 
-const uuidv4 = () => crypto.randomUUID();
-
-const dbPath = process.env.DATABASE_PATH || './arsjiujitsu.db';
-const db = new Database(path.resolve(dbPath));
-
-// Initialize database
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT NOT NULL,
-    belt TEXT DEFAULT 'white',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS techniques (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    position TEXT NOT NULL,
-    type TEXT NOT NULL,
-    description TEXT,
-    gi_type TEXT NOT NULL DEFAULT 'both',
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS user_ratings (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    technique_id TEXT NOT NULL,
-    rating INTEGER DEFAULT 0,
-    notes TEXT,
-    updated_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (technique_id) REFERENCES techniques(id) ON DELETE CASCADE,
-    UNIQUE(user_id, technique_id)
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_techniques_position ON techniques(position);
-  CREATE INDEX IF NOT EXISTS idx_techniques_type ON techniques(type);
-  CREATE INDEX IF NOT EXISTS idx_user_ratings_user ON user_ratings(user_id);
-  CREATE INDEX IF NOT EXISTS idx_user_ratings_technique ON user_ratings(technique_id);
-`);
+const prisma = new PrismaClient();
 
 interface Technique {
   name: string;
@@ -339,49 +294,57 @@ const techniques: Technique[] = [
   { name: 'Omoplata', position: 'Worm Guard', type: 'Submission', description: 'Omoplata from worm guard', gi_type: 'gi' },
 ];
 
-// Clear existing techniques
-db.prepare('DELETE FROM techniques').run();
+async function seed() {
+  // Clear existing techniques
+  await prisma.technique.deleteMany();
 
-// Insert techniques
-const insert = db.prepare(`
-  INSERT INTO techniques (id, name, position, type, description, gi_type)
-  VALUES (?, ?, ?, ?, ?, ?)
-`);
+  // Insert techniques
+  await prisma.technique.createMany({
+    data: techniques.map((tech) => ({
+      name: tech.name,
+      position: tech.position,
+      type: tech.type,
+      description: tech.description || null,
+      giType: tech.gi_type,
+    })),
+  });
 
-const insertMany = db.transaction((techs: Technique[]) => {
-  for (const tech of techs) {
-    insert.run(uuidv4(), tech.name, tech.position, tech.type, tech.description || null, tech.gi_type);
-  }
+  console.log(`✅ Seeded ${techniques.length} techniques`);
+
+  // Show technique count by position
+  const positionCounts = await prisma.technique.groupBy({
+    by: ['position'],
+    _count: true,
+    orderBy: {
+      position: 'asc',
+    },
+  });
+
+  console.log('\nTechniques by position:');
+  positionCounts.forEach((row) => {
+    console.log(`  ${row.position}: ${row._count}`);
+  });
+
+  // Show technique count by type
+  const typeCounts = await prisma.technique.groupBy({
+    by: ['type'],
+    _count: true,
+    orderBy: {
+      _count: {
+        type: 'desc',
+      },
+    },
+  });
+
+  console.log('\nTechniques by type:');
+  typeCounts.forEach((row) => {
+    console.log(`  ${row.type}: ${row._count}`);
+  });
+
+  await prisma.$disconnect();
+}
+
+seed().catch((error) => {
+  console.error('Error seeding database:', error);
+  process.exit(1);
 });
-
-insertMany(techniques);
-
-console.log(`✅ Seeded ${techniques.length} techniques`);
-
-// Show technique count by position
-const positionCounts = db.prepare(`
-  SELECT position, COUNT(*) as count 
-  FROM techniques 
-  GROUP BY position 
-  ORDER BY position
-`).all() as { position: string; count: number }[];
-
-console.log('\nTechniques by position:');
-positionCounts.forEach((row) => {
-  console.log(`  ${row.position}: ${row.count}`);
-});
-
-// Show technique count by type
-const typeCounts = db.prepare(`
-  SELECT type, COUNT(*) as count 
-  FROM techniques 
-  GROUP BY type 
-  ORDER BY count DESC
-`).all() as { type: string; count: number }[];
-
-console.log('\nTechniques by type:');
-typeCounts.forEach((row) => {
-  console.log(`  ${row.type}: ${row.count}`);
-});
-
-db.close();

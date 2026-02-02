@@ -1,83 +1,28 @@
-import Database from 'better-sqlite3';
-import path from 'path';
+import { PrismaClient } from '@prisma/client';
 
-const dbPath = process.env.DATABASE_PATH || './arsjiujitsu.db';
-const db = new Database(path.resolve(dbPath));
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
 
-// Enable WAL mode for better concurrent access
-db.pragma('journal_mode = WAL');
+export const prisma = globalForPrisma.prisma ?? new PrismaClient();
 
-// Create tables
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id TEXT PRIMARY KEY,
-    email TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
-    name TEXT NOT NULL,
-    belt TEXT DEFAULT 'white',
-    created_at TEXT DEFAULT (datetime('now')),
-    updated_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS techniques (
-    id TEXT PRIMARY KEY,
-    name TEXT NOT NULL,
-    position TEXT NOT NULL,
-    type TEXT NOT NULL,
-    description TEXT,
-    created_at TEXT DEFAULT (datetime('now'))
-  );
-
-  CREATE TABLE IF NOT EXISTS user_ratings (
-    id TEXT PRIMARY KEY,
-    user_id TEXT NOT NULL,
-    technique_id TEXT NOT NULL,
-    rating INTEGER DEFAULT 0,
-    notes TEXT,
-    updated_at TEXT DEFAULT (datetime('now')),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (technique_id) REFERENCES techniques(id) ON DELETE CASCADE,
-    UNIQUE(user_id, technique_id)
-  );
-
-  CREATE INDEX IF NOT EXISTS idx_techniques_position ON techniques(position);
-  CREATE INDEX IF NOT EXISTS idx_techniques_type ON techniques(type);
-  CREATE INDEX IF NOT EXISTS idx_user_ratings_user ON user_ratings(user_id);
-  CREATE INDEX IF NOT EXISTS idx_user_ratings_technique ON user_ratings(technique_id);
-`);
-
-export default db;
-
-// Types
-export interface User {
-  id: string;
-  email: string;
-  password_hash: string;
-  name: string;
-  belt: string;
-  created_at: string;
-  updated_at: string;
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
 }
 
-export interface Technique {
+export default prisma;
+
+// Re-export Prisma types for convenience
+export type { User, Technique, UserRating } from '@prisma/client';
+
+export interface TechniqueWithRating {
   id: string;
   name: string;
   position: string;
   type: string;
   description: string | null;
-  created_at: string;
-}
-
-export interface UserRating {
-  id: string;
-  user_id: string;
-  technique_id: string;
-  rating: number;
-  notes: string | null;
-  updated_at: string;
-}
-
-export interface TechniqueWithRating extends Technique {
+  giType: string;
+  createdAt: Date;
   rating: number | null;
   notes: string | null;
 }
