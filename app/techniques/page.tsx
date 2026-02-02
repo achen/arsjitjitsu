@@ -127,8 +127,8 @@ export default function TechniquesPage() {
   const saveBulkRatings = async () => {
     if (!user || bulkRating === '' || selectedTechniques.size === 0) return;
 
-    const ratingValue = Number(bulkRating);
-    const selectedIds = new Set(selectedTechniques);
+    const ratingValue = typeof bulkRating === 'string' ? parseInt(bulkRating, 10) : bulkRating;
+    const selectedIdsArray = Array.from(selectedTechniques);
     
     setSavingBulk(true);
     try {
@@ -136,23 +136,26 @@ export default function TechniquesPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          techniqueIds: Array.from(selectedIds), 
+          techniqueIds: selectedIdsArray, 
           rating: ratingValue 
         }),
       });
 
       if (res.ok) {
-        // Update techniques with the new rating
+        // Update techniques with the new rating using the saved array
         setTechniques(prev => prev.map(t => 
-          selectedIds.has(t.id) ? { ...t, rating: ratingValue } : t
+          selectedIdsArray.includes(t.id) ? { ...t, rating: ratingValue } : t
         ));
         setSelectedTechniques(new Set());
         setBulkRating('');
       } else {
-        console.error('Bulk save failed:', await res.text());
+        const errorText = await res.text();
+        console.error('Bulk save failed:', errorText);
+        alert(`Failed to save: ${errorText}`);
       }
     } catch (error) {
       console.error('Bulk save error:', error);
+      alert(`Error: ${error}`);
     } finally {
       setSavingBulk(false);
     }
