@@ -355,6 +355,23 @@ const techniques: Technique[] = [
   { name: 'Mount Transition', position: 'High Ground', type: 'Transition', description: 'Come up to mount from high ground', gi_type: 'both' },
   { name: 'Kimura', position: 'High Ground', type: 'Submission', description: 'Kimura grip attack from high ground', gi_type: 'both' },
   { name: 'High Ground Retention', position: 'High Ground', type: 'Defense', description: 'Maintaining the high ground position', gi_type: 'both' },
+
+  // K Guard (Lachlan Giles)
+  { name: 'K Guard Entry from Half Guard', position: 'K Guard', type: 'Setup', description: 'Enter K Guard from half guard bottom', gi_type: 'both' },
+  { name: 'K Guard Entry from Butterfly', position: 'K Guard', type: 'Setup', description: 'Transition to K Guard from butterfly guard', gi_type: 'both' },
+  { name: 'K Guard Entry from Open Guard', position: 'K Guard', type: 'Setup', description: 'Pull into K Guard from open guard', gi_type: 'both' },
+  { name: 'Inside Heel Hook', position: 'K Guard', type: 'Submission', description: 'Inside heel hook from K Guard', gi_type: 'both' },
+  { name: 'Outside Heel Hook', position: 'K Guard', type: 'Submission', description: 'Outside heel hook attack from K Guard', gi_type: 'both' },
+  { name: 'Backside 50/50 Entry', position: 'K Guard', type: 'Transition', description: 'Transition to backside 50/50 for heel hook', gi_type: 'both' },
+  { name: 'Inside Sankaku Entry', position: 'K Guard', type: 'Transition', description: 'Enter inside sankaku/saddle from K Guard', gi_type: 'both' },
+  { name: 'Outside Ashi Entry', position: 'K Guard', type: 'Transition', description: 'Transition to outside ashi garami', gi_type: 'both' },
+  { name: 'Straight Ankle Lock', position: 'K Guard', type: 'Submission', description: 'Ankle lock from K Guard position', gi_type: 'both' },
+  { name: 'Kneebar', position: 'K Guard', type: 'Submission', description: 'Kneebar attack from K Guard', gi_type: 'both' },
+  { name: 'K Guard Sweep', position: 'K Guard', type: 'Sweep', description: 'Off-balance and sweep from K Guard', gi_type: 'both' },
+  { name: 'Back Take', position: 'K Guard', type: 'Transition', description: 'Take the back from K Guard', gi_type: 'both' },
+  { name: 'Cross Ashi Entry', position: 'K Guard', type: 'Transition', description: 'Transition to cross ashi/honey hole', gi_type: 'both' },
+  { name: 'K Guard Retention', position: 'K Guard', type: 'Defense', description: 'Maintaining K Guard against passes', gi_type: 'both' },
+  { name: 'Calf Slicer', position: 'K Guard', type: 'Submission', description: 'Calf slicer from K Guard transitions', gi_type: 'both' },
 ];
 
 async function seed() {

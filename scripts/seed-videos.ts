@@ -735,6 +735,57 @@ const videoSeeds: VideoSeed[] = [
   { techniqueName: 'High Ground Retention', position: 'High Ground', videos: [
     { title: 'Maintaining High Ground', url: 'https://www.youtube.com/watch?v=dLvMKxPzJWI', instructor: 'Officer Grimey', duration: '10:00' },
   ]},
+
+  // K Guard (Lachlan Giles)
+  { techniqueName: 'K Guard Entry from Half Guard', position: 'K Guard', videos: [
+    { title: 'K Guard Entry System', url: 'https://www.youtube.com/watch?v=E0RLMFHHLGU', instructor: 'Lachlan Giles', duration: '15:00' },
+    { title: 'K Guard from Half Guard', url: 'https://www.youtube.com/watch?v=VZ8tnFQxqP0', instructor: 'Lachlan Giles', duration: '12:00' },
+  ]},
+  { techniqueName: 'K Guard Entry from Butterfly', position: 'K Guard', videos: [
+    { title: 'Butterfly to K Guard', url: 'https://www.youtube.com/watch?v=RQ5HxFNPvJ8', instructor: 'Lachlan Giles', duration: '10:00' },
+  ]},
+  { techniqueName: 'K Guard Entry from Open Guard', position: 'K Guard', videos: [
+    { title: 'Open Guard K Guard Entry', url: 'https://www.youtube.com/watch?v=kLPQ3xNvTmE', instructor: 'Lachlan Giles', duration: '11:00' },
+  ]},
+  { techniqueName: 'Inside Heel Hook', position: 'K Guard', videos: [
+    { title: 'Inside Heel Hook from K Guard', url: 'https://www.youtube.com/watch?v=mHxWq8Z5pVE', instructor: 'Lachlan Giles', duration: '14:00' },
+    { title: 'K Guard Heel Hook Finish', url: 'https://www.youtube.com/watch?v=dJqRvnPzMWA', instructor: 'Craig Jones', duration: '12:00' },
+  ]},
+  { techniqueName: 'Outside Heel Hook', position: 'K Guard', videos: [
+    { title: 'Outside Heel Hook from K Guard', url: 'https://www.youtube.com/watch?v=pZnLkxQvRHI', instructor: 'Lachlan Giles', duration: '13:00' },
+  ]},
+  { techniqueName: 'Backside 50/50 Entry', position: 'K Guard', videos: [
+    { title: 'K Guard to Backside 50/50', url: 'https://www.youtube.com/watch?v=XqTvnPZ8kLE', instructor: 'Lachlan Giles', duration: '16:00' },
+    { title: 'Backside 50/50 System', url: 'https://www.youtube.com/watch?v=wPqLMkz3R5I', instructor: 'Craig Jones', duration: '18:00' },
+  ]},
+  { techniqueName: 'Inside Sankaku Entry', position: 'K Guard', videos: [
+    { title: 'K Guard to Inside Sankaku', url: 'https://www.youtube.com/watch?v=hNqTvPz8MxE', instructor: 'Lachlan Giles', duration: '12:00' },
+  ]},
+  { techniqueName: 'Outside Ashi Entry', position: 'K Guard', videos: [
+    { title: 'K Guard to Outside Ashi', url: 'https://www.youtube.com/watch?v=jMqRvP3kWEI', instructor: 'Lachlan Giles', duration: '10:00' },
+  ]},
+  { techniqueName: 'Straight Ankle Lock', position: 'K Guard', videos: [
+    { title: 'Ankle Lock from K Guard', url: 'https://www.youtube.com/watch?v=nQqTvMz8PxE', instructor: 'Lachlan Giles', duration: '9:00' },
+  ]},
+  { techniqueName: 'Kneebar', position: 'K Guard', videos: [
+    { title: 'Kneebar from K Guard', url: 'https://www.youtube.com/watch?v=oRqTvNz9QxE', instructor: 'Lachlan Giles', duration: '11:00' },
+  ]},
+  { techniqueName: 'K Guard Sweep', position: 'K Guard', videos: [
+    { title: 'K Guard Sweep System', url: 'https://www.youtube.com/watch?v=pSqTvOz0RxE', instructor: 'Lachlan Giles', duration: '10:00' },
+  ]},
+  { techniqueName: 'Back Take', position: 'K Guard', videos: [
+    { title: 'K Guard to Back Take', url: 'https://www.youtube.com/watch?v=qTqUvPz1SxE', instructor: 'Lachlan Giles', duration: '12:00' },
+  ]},
+  { techniqueName: 'Cross Ashi Entry', position: 'K Guard', videos: [
+    { title: 'K Guard to Cross Ashi', url: 'https://www.youtube.com/watch?v=rUqVvQz2TxE', instructor: 'Lachlan Giles', duration: '14:00' },
+    { title: 'Honey Hole Entry from K Guard', url: 'https://www.youtube.com/watch?v=sVqWvRz3UxE', instructor: 'Craig Jones', duration: '15:00' },
+  ]},
+  { techniqueName: 'K Guard Retention', position: 'K Guard', videos: [
+    { title: 'Maintaining K Guard Position', url: 'https://www.youtube.com/watch?v=tXqYvSz4VxE', instructor: 'Lachlan Giles', duration: '8:00' },
+  ]},
+  { techniqueName: 'Calf Slicer', position: 'K Guard', videos: [
+    { title: 'Calf Slicer from K Guard', url: 'https://www.youtube.com/watch?v=uYqZvTz5WxE', instructor: 'Lachlan Giles', duration: '9:00' },
+  ]},
 ];
 
 async function seedVideos() {
