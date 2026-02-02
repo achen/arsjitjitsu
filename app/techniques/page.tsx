@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2 } from 'lucide-react';
 
 interface TechniqueVideo {
   id: string;
@@ -10,6 +10,12 @@ interface TechniqueVideo {
   url: string;
   instructor: string | null;
   duration: string | null;
+}
+
+interface TechniqueNote {
+  id: string;
+  content: string;
+  createdAt: string;
 }
 
 interface Technique {
@@ -34,7 +40,7 @@ const POSITIONS = [
   'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
   'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'Butterfly Half',
   'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'X-Guard', 'Single Leg X',
-  '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground',
+  '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground', 'K Guard',
   'Rubber Guard', 'Worm Guard', 'Waiter Guard', 'Standing',
   'Turtle Top', 'Turtle Bottom', 'North-South Top', 'North-South Bottom',
   'Knee on Belly', 'Crucifix', 'Leg Entanglement'
@@ -76,6 +82,13 @@ export default function TechniquesPage() {
   
   // Expanded videos state
   const [expandedVideos, setExpandedVideos] = useState<Set<string>>(new Set());
+  
+  // Notes state
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+  const [techniqueNotes, setTechniqueNotes] = useState<Record<string, TechniqueNote[]>>({});
+  const [loadingNotes, setLoadingNotes] = useState<Set<string>>(new Set());
+  const [newNoteText, setNewNoteText] = useState<Record<string, string>>({});
+  const [savingNote, setSavingNote] = useState<string | null>(null);
 
   // Load collapsed groups from localStorage
   useEffect(() => {
@@ -270,6 +283,100 @@ export default function TechniquesPage() {
     } catch (error) {
       console.error('Toggle working on error:', error);
     }
+  };
+
+  const toggleNotesExpanded = async (techniqueId: string) => {
+    const newExpanded = new Set(expandedNotes);
+    if (newExpanded.has(techniqueId)) {
+      newExpanded.delete(techniqueId);
+    } else {
+      newExpanded.add(techniqueId);
+      // Fetch notes if not already loaded
+      if (!techniqueNotes[techniqueId]) {
+        await fetchNotes(techniqueId);
+      }
+    }
+    setExpandedNotes(newExpanded);
+  };
+
+  const fetchNotes = async (techniqueId: string) => {
+    setLoadingNotes(prev => new Set(prev).add(techniqueId));
+    try {
+      const res = await fetch(`/api/notes?techniqueId=${techniqueId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setTechniqueNotes(prev => ({ ...prev, [techniqueId]: data.notes }));
+      }
+    } catch (error) {
+      console.error('Fetch notes error:', error);
+    } finally {
+      setLoadingNotes(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(techniqueId);
+        return newSet;
+      });
+    }
+  };
+
+  const addNote = async (techniqueId: string) => {
+    if (!user) return;
+    const content = newNoteText[techniqueId]?.trim();
+    if (!content) return;
+
+    setSavingNote(techniqueId);
+    try {
+      const res = await fetch('/api/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ techniqueId, content }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setTechniqueNotes(prev => ({
+          ...prev,
+          [techniqueId]: [data.note, ...(prev[techniqueId] || [])],
+        }));
+        setNewNoteText(prev => ({ ...prev, [techniqueId]: '' }));
+      }
+    } catch (error) {
+      console.error('Add note error:', error);
+    } finally {
+      setSavingNote(null);
+    }
+  };
+
+  const deleteNote = async (techniqueId: string, noteId: string) => {
+    if (!user) return;
+    if (!confirm('Delete this note?')) return;
+
+    try {
+      const res = await fetch('/api/notes', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ noteId }),
+      });
+
+      if (res.ok) {
+        setTechniqueNotes(prev => ({
+          ...prev,
+          [techniqueId]: (prev[techniqueId] || []).filter(n => n.id !== noteId),
+        }));
+      }
+    } catch (error) {
+      console.error('Delete note error:', error);
+    }
+  };
+
+  const formatNoteDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
   };
 
   const getRatingColor = (rating: number | null) => {
@@ -584,6 +691,25 @@ export default function TechniquesPage() {
                                 {technique.videos.length} video{technique.videos.length > 1 ? 's' : ''}
                               </button>
                             )}
+                            {/* Notes button */}
+                            {user && (
+                              <button
+                                onClick={() => toggleNotesExpanded(technique.id)}
+                                className={`flex items-center gap-1 px-2 py-0.5 text-xs rounded-full ${
+                                  expandedNotes.has(technique.id)
+                                    ? 'bg-blue-200 text-blue-800 dark:bg-blue-800 dark:text-blue-200'
+                                    : 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800'
+                                }`}
+                              >
+                                <MessageSquare size={12} />
+                                Notes
+                                {techniqueNotes[technique.id]?.length > 0 && (
+                                  <span className="ml-1 bg-blue-600 text-white rounded-full px-1.5 text-xs">
+                                    {techniqueNotes[technique.id].length}
+                                  </span>
+                                )}
+                              </button>
+                            )}
                           </div>
                           {technique.description && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
@@ -614,6 +740,67 @@ export default function TechniquesPage() {
                                   <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
                                 </a>
                               ))}
+                            </div>
+                          )}
+
+                          {/* Expanded Notes Section */}
+                          {user && expandedNotes.has(technique.id) && (
+                            <div className="mt-3 space-y-3">
+                              <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Notes:</p>
+                              
+                              {/* Add Note Form */}
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  value={newNoteText[technique.id] || ''}
+                                  onChange={(e) => setNewNoteText(prev => ({ ...prev, [technique.id]: e.target.value }))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      addNote(technique.id);
+                                    }
+                                  }}
+                                  placeholder="Add a note..."
+                                  className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                />
+                                <button
+                                  onClick={() => addNote(technique.id)}
+                                  disabled={!newNoteText[technique.id]?.trim() || savingNote === technique.id}
+                                  className="px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                                >
+                                  <Plus size={16} />
+                                  {savingNote === technique.id ? 'Adding...' : 'Add'}
+                                </button>
+                              </div>
+
+                              {/* Notes List */}
+                              {loadingNotes.has(technique.id) ? (
+                                <div className="text-sm text-gray-500 dark:text-gray-400 py-2">Loading notes...</div>
+                              ) : techniqueNotes[technique.id]?.length > 0 ? (
+                                <div className="space-y-2">
+                                  {techniqueNotes[technique.id].map(note => (
+                                    <div
+                                      key={note.id}
+                                      className="flex items-start gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg group"
+                                    >
+                                      <MessageSquare size={14} className="text-blue-500 flex-shrink-0 mt-0.5" />
+                                      <div className="flex-1 min-w-0">
+                                        <p className="text-sm text-gray-900 dark:text-white whitespace-pre-wrap">{note.content}</p>
+                                        <p className="text-xs text-gray-400 mt-1">{formatNoteDate(note.createdAt)}</p>
+                                      </div>
+                                      <button
+                                        onClick={() => deleteNote(technique.id, note.id)}
+                                        className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        title="Delete note"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-500 dark:text-gray-400 py-2">No notes yet. Add your first note above!</p>
+                              )}
                             </div>
                           )}
                         </div>

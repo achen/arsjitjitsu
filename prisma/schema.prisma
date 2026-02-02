@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String       @map("password_hash")
+  id           String           @id @default(uuid())
+  email        String           @unique
+  passwordHash String           @map("password_hash")
   name         String
-  belt         String       @default("white")
-  createdAt    DateTime     @default(now()) @map("created_at")
-  updatedAt    DateTime     @updatedAt @map("updated_at")
+  belt         String           @default("white")
+  createdAt    DateTime         @default(now()) @map("created_at")
+  updatedAt    DateTime         @updatedAt @map("updated_at")
   ratings      UserRating[]
+  notes        TechniqueNote[]
 
   @@map("users")
 }
@@ -33,6 +34,7 @@ model Technique {
   createdAt   DateTime          @default(now()) @map("created_at")
   ratings     UserRating[]
   videos      TechniqueVideo[]
+  notes       TechniqueNote[]
 
   @@index([position])
   @@index([type])
@@ -68,4 +70,19 @@ model UserRating {
   @@index([userId])
   @@index([techniqueId])
   @@map("user_ratings")
+}
+
+model TechniqueNote {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  techniqueId String    @map("technique_id")
+  content     String
+  createdAt   DateTime  @default(now()) @map("created_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([techniqueId])
+  @@index([createdAt])
+  @@map("technique_notes")
 }
