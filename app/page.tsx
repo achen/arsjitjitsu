@@ -108,25 +108,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Positions Preview */}
+        {/* Watch Videos */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8">
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6 text-center">
-            Positions Covered
+            Watch Videos
           </h2>
-          <div className="flex flex-wrap gap-2 justify-center">
-            {[
-              'Mount', 'Side Control', 'Back Control', 'Closed Guard', 
-              'Half Guard', 'Butterfly Guard', 'De La Riva', 'Spider Guard',
-              'X-Guard', 'Lasso Guard', '50/50', 'Standing', 'Turtle',
-              'North-South', 'Knee on Belly', 'Leg Entanglement', 'Mobility'
-            ].map((position) => (
-              <span
-                key={position}
-                className="px-3 py-1 bg-gray-100 dark:bg-gray-700 rounded-full text-sm text-gray-700 dark:text-gray-200"
-              >
-                {position}
-              </span>
-            ))}
+          <p className="text-gray-600 dark:text-gray-300 text-center mb-6">
+            Learn from curated instructional videos for each technique. Watch demonstrations 
+            and breakdowns from top BJJ instructors.
+          </p>
+          <div className="flex justify-center">
+            <Link
+              href="/techniques"
+              className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-colors"
+            >
+              Browse Techniques & Videos
+            </Link>
           </div>
         </div>
       </main>
