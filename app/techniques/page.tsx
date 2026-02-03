@@ -24,6 +24,7 @@ interface Technique {
   position: string;
   type: string;
   description: string | null;
+  giType: string;
   rating: number | null;
   notes: string | null;
   workingOn: boolean;
@@ -61,6 +62,12 @@ const RATING_OPTIONS = [
   { value: 7, label: "World class black belt" },
 ];
 
+const GI_OPTIONS = [
+  { value: 'all', label: 'All (Gi & No-Gi)' },
+  { value: 'gi', label: 'Gi Only' },
+  { value: 'nogi', label: 'No-Gi Only' },
+];
+
 export default function TechniquesPage() {
   const [techniques, setTechniques] = useState<Technique[]>([]);
   const [loading, setLoading] = useState(true);
@@ -83,6 +90,9 @@ export default function TechniquesPage() {
   // Expanded videos state
   const [expandedVideos, setExpandedVideos] = useState<Set<string>>(new Set());
   
+  // Gi filter state (persisted in localStorage)
+  const [giFilter, setGiFilter] = useState<string>('all');
+  
   // Notes state
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [techniqueNotes, setTechniqueNotes] = useState<Record<string, TechniqueNote[]>>({});
@@ -99,6 +109,20 @@ export default function TechniquesPage() {
       // All collapsed by default - will be set after techniques load
     }
   }, []);
+
+  // Load gi filter preference from localStorage
+  useEffect(() => {
+    const savedGiFilter = localStorage.getItem('giFilter');
+    if (savedGiFilter) {
+      setGiFilter(savedGiFilter);
+    }
+  }, []);
+
+  // Save gi filter preference to localStorage
+  const handleGiFilterChange = (value: string) => {
+    setGiFilter(value);
+    localStorage.setItem('giFilter', value);
+  };
 
   // Set all groups collapsed by default when techniques first load
   useEffect(() => {
@@ -389,11 +413,20 @@ export default function TechniquesPage() {
     return 'bg-gray-100';
   };
 
-  // Separate working on techniques
-  const workingOnTechniques = techniques.filter(t => t.workingOn);
+  // Apply gi filter
+  const giFilteredTechniques = techniques.filter(t => {
+    if (giFilter === 'all') return true;
+    if (giFilter === 'gi') return t.giType === 'gi' || t.giType === 'both';
+    if (giFilter === 'nogi') return t.giType === 'nogi' || t.giType === 'both';
+    return true;
+  });
+  
+  // Separate working on techniques (from gi-filtered set)
+  const workingOnTechniques = giFilteredTechniques.filter(t => t.workingOn);
+  
   const filteredTechniques = showWorkingOnOnly 
-    ? workingOnTechniques 
-    : techniques;
+    ? workingOnTechniques
+    : giFilteredTechniques;
 
   const groupedTechniques = filteredTechniques.reduce((acc, technique) => {
     if (!acc[technique.position]) {
@@ -468,12 +501,27 @@ export default function TechniquesPage() {
                     ))}
                   </select>
                 </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">
+                    Gi / No-Gi
+                  </label>
+                  <select
+                    value={giFilter}
+                    onChange={(e) => handleGiFilterChange(e.target.value)}
+                    className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    {GI_OPTIONS.map(opt => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
+                  </select>
+                </div>
                 <div className="flex items-end">
                   <button
                     onClick={() => {
                       setSelectedPosition('');
                       setSelectedType('');
                       setSearchQuery('');
+                      handleGiFilterChange('all');
                     }}
                     className="px-4 py-2 text-blue-600 hover:text-blue-700 dark:text-blue-400"
                   >
