@@ -97,7 +97,7 @@ export default function Navigation() {
               className="flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
             >
               <Medal size={20} />
-              <span>Leaderboard</span>
+              <span>Community</span>
             </Link>
 
             {!loading && (
@@ -202,7 +202,7 @@ export default function Navigation() {
               onClick={() => setMenuOpen(false)}
             >
               <Medal size={20} />
-              <span>Leaderboard</span>
+              <span>Community</span>
             </Link>
             {user ? (
               <>

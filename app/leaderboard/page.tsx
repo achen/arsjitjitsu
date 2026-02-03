@@ -99,7 +99,7 @@ export default function LeaderboardPage() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-3">
             <Trophy className="text-yellow-500" size={36} />
-            Leaderboard
+            Community
           </h1>
           <p className="text-gray-600 dark:text-gray-400 mt-2">
             See how you stack up against other practitioners
@@ -144,7 +144,7 @@ export default function LeaderboardPage() {
                 </div>
                 <div>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {beltFilter ? `${getBeltInfo(beltFilter).label} Belt Leaders` : 'Top Score'}
+                    {beltFilter ? `${getBeltInfo(beltFilter).label} Belt Leaders` : 'Top Points'}
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {data.leaderboard[0]?.score.toLocaleString() || 0}
@@ -204,7 +204,7 @@ export default function LeaderboardPage() {
           ) : data?.leaderboard.length === 0 ? (
             <div className="text-center py-20 text-gray-500 dark:text-gray-400">
               <Trophy size={48} className="mx-auto mb-4 opacity-50" />
-              <p className="text-lg">No users on the leaderboard yet</p>
+              <p className="text-lg">No users in the community yet</p>
               <p className="text-sm mt-2">Be the first to rate techniques and appear here!</p>
             </div>
           ) : (
@@ -228,7 +228,7 @@ export default function LeaderboardPage() {
                       Gym
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                      Score
+                      Points
                     </th>
                     <th className="px-6 py-4 text-right text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider hidden sm:table-cell">
                       Rated
@@ -311,7 +311,7 @@ export default function LeaderboardPage() {
 
         {/* Footer note */}
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-6">
-          Only users who have opted to appear on the leaderboard are shown.
+          Only users who have opted to appear in the community are shown.
           Update your profile privacy settings to be included.
         </p>
       </main>
