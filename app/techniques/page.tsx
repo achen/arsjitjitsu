@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2 } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2 } from 'lucide-react';
 
 interface TechniqueVideo {
   id: string;
@@ -35,6 +35,7 @@ interface Technique {
 interface User {
   id: string;
   name: string;
+  isAdmin?: boolean;
 }
 
 const POSITIONS = [
@@ -104,6 +105,15 @@ export default function TechniquesPage() {
   // Bookmarks state
   const [bookmarkedVideos, setBookmarkedVideos] = useState<Set<string>>(new Set());
   const [togglingBookmark, setTogglingBookmark] = useState<string | null>(null);
+  
+  // Admin edit state
+  const [editingTechnique, setEditingTechnique] = useState<Technique | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', position: '', type: '', description: '', giType: 'both' });
+  const [savingEdit, setSavingEdit] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // Get unique positions from techniques for the edit dropdown
+  const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
 
   // Load collapsed groups from localStorage
   useEffect(() => {
@@ -210,6 +220,83 @@ export default function TechniquesPage() {
       console.error('Toggle bookmark error:', error);
     } finally {
       setTogglingBookmark(null);
+    }
+  };
+
+  const openEditModal = (technique: Technique) => {
+    setEditingTechnique(technique);
+    setEditForm({
+      name: technique.name,
+      position: technique.position,
+      type: technique.type,
+      description: technique.description || '',
+      giType: technique.giType,
+    });
+    setEditError(null);
+  };
+
+  const closeEditModal = () => {
+    setEditingTechnique(null);
+    setEditForm({ name: '', position: '', type: '', description: '', giType: 'both' });
+    setEditError(null);
+  };
+
+  const saveTechniqueEdit = async () => {
+    if (!editingTechnique) return;
+    
+    setSavingEdit(true);
+    setEditError(null);
+    
+    try {
+      const res = await fetch('/api/admin/techniques', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingTechnique.id,
+          ...editForm,
+        }),
+      });
+
+      if (res.ok) {
+        const { technique } = await res.json();
+        setTechniques(prev => prev.map(t => 
+          t.id === technique.id 
+            ? { ...t, ...technique }
+            : t
+        ));
+        closeEditModal();
+      } else {
+        const data = await res.json();
+        setEditError(data.error || 'Failed to save');
+      }
+    } catch (error) {
+      setEditError('Network error');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
+  const deleteTechnique = async () => {
+    if (!editingTechnique) return;
+    if (!confirm(`Are you sure you want to delete "${editingTechnique.name}"? This cannot be undone.`)) return;
+    
+    setSavingEdit(true);
+    try {
+      const res = await fetch(`/api/admin/techniques?id=${editingTechnique.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setTechniques(prev => prev.filter(t => t.id !== editingTechnique.id));
+        closeEditModal();
+      } else {
+        const data = await res.json();
+        setEditError(data.error || 'Failed to delete');
+      }
+    } catch (error) {
+      setEditError('Network error');
+    } finally {
+      setSavingEdit(false);
     }
   };
 
@@ -815,6 +902,16 @@ export default function TechniquesPage() {
                                 )}
                               </button>
                             )}
+                            {/* Admin Edit button */}
+                            {user?.isAdmin && (
+                              <button
+                                onClick={() => openEditModal(technique)}
+                                className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-200 hover:bg-yellow-200 dark:hover:bg-yellow-800"
+                              >
+                                <Edit2 size={12} />
+                                Edit
+                              </button>
+                            )}
                           </div>
                           {technique.description && (
                             <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 truncate">
@@ -965,6 +1062,132 @@ export default function TechniquesPage() {
           </div>
         )}
       </main>
+
+      {/* Edit Technique Modal */}
+      {editingTechnique && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Edit Technique
+                </h2>
+                <button
+                  onClick={closeEditModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {editError && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+                  {editError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Position *
+                  </label>
+                  <select
+                    value={editForm.position}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, position: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Position</option>
+                    {uniquePositions.map(p => (
+                      <option key={p} value={p}>{p}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type *
+                  </label>
+                  <select
+                    value={editForm.type}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, type: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="">Select Type</option>
+                    {TYPES.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Gi Type
+                  </label>
+                  <select
+                    value={editForm.giType}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, giType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="both">Both (Gi & No-Gi)</option>
+                    <option value="gi">Gi Only</option>
+                    <option value="nogi">No-Gi Only</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={editForm.description}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex items-center justify-between">
+                <button
+                  onClick={deleteTechnique}
+                  disabled={savingEdit}
+                  className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  <Trash2 size={18} className="inline mr-1" />
+                  Delete
+                </button>
+                <div className="flex gap-3">
+                  <button
+                    onClick={closeEditModal}
+                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={saveTechniqueEdit}
+                    disabled={savingEdit || !editForm.name || !editForm.position || !editForm.type}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {savingEdit ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
