@@ -32,8 +32,8 @@ export async function GET(request: NextRequest) {
     const ageRange = searchParams.get('ageRange') as keyof typeof AGE_RANGES | null;
     const weight = searchParams.get('weight');
 
-    // Build where clause for filtering
-    const whereClause: any = { isPublic: true };
+    // Build where clause for filtering (include all users for stats, not just public)
+    const whereClause: any = {};
     if (belt) {
       whereClause.belt = belt;
     }
@@ -41,17 +41,15 @@ export async function GET(request: NextRequest) {
       whereClause.weight = weight;
     }
 
-    // Get all matching users with their scores
+    // Get all matching users with their ratings by technique
     const matchingUsers = await prisma.user.findMany({
       where: whereClause,
       select: {
         id: true,
-        name: true,
-        belt: true,
         birthDate: true,
-        weight: true,
         ratings: {
           select: {
+            techniqueId: true,
             rating: true,
           },
         },
@@ -69,11 +67,11 @@ export async function GET(request: NextRequest) {
       });
     }
 
+    const filteredUserIds = new Set(filteredUsers.map(u => u.id));
+
     // Calculate stats for each user
     const usersWithStats = filteredUsers.map(user => ({
       id: user.id,
-      name: user.name,
-      belt: user.belt,
       points: user.ratings.reduce((sum, r) => sum + r.rating, 0),
       techniquesRated: user.ratings.filter(r => r.rating > 0).length,
     }));
@@ -113,17 +111,56 @@ export async function GET(request: NextRequest) {
       },
     };
 
-    // Get belt counts for filter options (all public users)
+    // Get all techniques with their average ratings from matching users
+    const techniques = await prisma.technique.findMany({
+      select: {
+        id: true,
+        name: true,
+        position: true,
+        type: true,
+        ratings: {
+          where: {
+            userId: { in: Array.from(filteredUserIds) },
+            rating: { gt: 0 },
+          },
+          select: {
+            rating: true,
+          },
+        },
+      },
+      orderBy: [
+        { position: 'asc' },
+        { name: 'asc' },
+      ],
+    });
+
+    // Calculate average rating for each technique
+    const techniqueAverages = techniques.map(tech => {
+      const ratings = tech.ratings.map(r => r.rating);
+      const ratedCount = ratings.length;
+      const avgRating = ratedCount > 0 
+        ? Math.round((ratings.reduce((sum, r) => sum + r, 0) / ratedCount) * 10) / 10 
+        : 0;
+      return {
+        id: tech.id,
+        name: tech.name,
+        position: tech.position,
+        type: tech.type,
+        avgRating,
+        ratedCount,
+      };
+    });
+
+    // Get belt counts for filter options (all users)
     const beltCounts = await prisma.user.groupBy({
       by: ['belt'],
-      where: { isPublic: true },
       _count: true,
     });
 
     // Get weight counts for filter options
     const weightCounts = await prisma.user.groupBy({
       by: ['weight'],
-      where: { isPublic: true, weight: { not: null } },
+      where: { weight: { not: null } },
       _count: true,
     });
 
@@ -131,6 +168,7 @@ export async function GET(request: NextRequest) {
       matchingCount: count,
       averages,
       percentiles,
+      techniqueAverages,
       filters: {
         belt: belt || null,
         ageRange: ageRange || null,

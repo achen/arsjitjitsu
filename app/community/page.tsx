@@ -1,14 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Navigation from '@/components/Navigation';
-import { Users, TrendingUp, Target, Filter, BarChart3, Info } from 'lucide-react';
+import { Users, TrendingUp, Target, Filter, BarChart3, Info, ChevronDown, ChevronRight, Search } from 'lucide-react';
 
 interface UserProfile {
   belt: string;
   birthDate: string | null;
   weight: string | null;
+}
+
+interface TechniqueAverage {
+  id: string;
+  name: string;
+  position: string;
+  type: string;
+  avgRating: number;
+  ratedCount: number;
 }
 
 interface CommunityData {
@@ -21,6 +30,7 @@ interface CommunityData {
     points: { p25: number; p50: number; p75: number; p90: number };
     techniquesRated: { p25: number; p50: number; p75: number; p90: number };
   };
+  techniqueAverages: TechniqueAverage[];
   filters: {
     belt: string | null;
     ageRange: string | null;
@@ -33,6 +43,10 @@ interface CommunityData {
 interface MyStats {
   points: number;
   techniquesRated: number;
+}
+
+interface MyRatings {
+  [techniqueId: string]: number;
 }
 
 // Belt display info
@@ -114,10 +128,21 @@ function getAgeRangeFromBirthDate(birthDate: string): string | null {
   return 'master7';
 }
 
+function getRatingColor(rating: number): string {
+  if (rating === 0) return 'bg-gray-200 text-gray-600';
+  if (rating < 2) return 'bg-white border border-gray-300 text-gray-900';
+  if (rating < 3) return 'bg-blue-500 text-white';
+  if (rating < 4) return 'bg-purple-500 text-white';
+  if (rating < 5) return 'bg-amber-700 text-white';
+  if (rating < 6) return 'bg-gray-900 text-white';
+  return 'bg-gradient-to-r from-yellow-400 to-yellow-600 text-gray-900';
+}
+
 export default function CommunityPage() {
   const router = useRouter();
   const [data, setData] = useState<CommunityData | null>(null);
   const [myStats, setMyStats] = useState<MyStats | null>(null);
+  const [myRatings, setMyRatings] = useState<MyRatings>({});
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -127,6 +152,11 @@ export default function CommunityPage() {
   const [ageRangeFilter, setAgeRangeFilter] = useState<string>('');
   const [weightFilter, setWeightFilter] = useState<string>('');
   const [filtersInitialized, setFiltersInitialized] = useState(false);
+  
+  // Technique list state
+  const [expandedPositions, setExpandedPositions] = useState<Set<string>>(new Set());
+  const [techniqueSearch, setTechniqueSearch] = useState('');
+  const [showOnlyRated, setShowOnlyRated] = useState(false);
 
   // Load user profile and stats
   useEffect(() => {
@@ -151,6 +181,17 @@ export default function CommunityPage() {
               points: statsData.totalPoints,
               techniquesRated: statsData.totalRated,
             });
+          }
+          
+          // Get user's ratings for comparison
+          const ratingsRes = await fetch('/api/ratings');
+          if (ratingsRes.ok) {
+            const ratingsData = await ratingsRes.json();
+            const ratingsMap: MyRatings = {};
+            ratingsData.ratings.forEach((r: { techniqueId: string; rating: number }) => {
+              ratingsMap[r.techniqueId] = r.rating;
+            });
+            setMyRatings(ratingsMap);
           }
           
           // Pre-fill filters from user profile
@@ -209,31 +250,72 @@ export default function CommunityPage() {
   };
 
   const getComparisonText = (myValue: number, average: number) => {
-    if (average === 0) return { text: 'No data to compare', color: 'text-gray-500' };
-    if (myValue === average) return { text: 'At average', color: 'text-gray-500' };
+    if (average === 0) return { text: 'No data', color: 'text-gray-500' };
+    if (myValue === average) return { text: 'At avg', color: 'text-gray-500' };
     if (myValue > average) {
       const pct = Math.round(((myValue - average) / average) * 100);
-      return { text: `${pct}% above average`, color: 'text-green-600 dark:text-green-400' };
+      return { text: `+${pct}%`, color: 'text-green-600 dark:text-green-400' };
     }
     const pct = Math.round(((average - myValue) / average) * 100);
-    return { text: `${pct}% below average`, color: 'text-orange-600 dark:text-orange-400' };
-  };
-
-  const getPercentileRank = (myValue: number, percentiles: { p25: number; p50: number; p75: number; p90: number }) => {
-    if (myValue >= percentiles.p90) return { rank: 'Top 10%', color: 'text-purple-600 dark:text-purple-400' };
-    if (myValue >= percentiles.p75) return { rank: 'Top 25%', color: 'text-blue-600 dark:text-blue-400' };
-    if (myValue >= percentiles.p50) return { rank: 'Top 50%', color: 'text-green-600 dark:text-green-400' };
-    if (myValue >= percentiles.p25) return { rank: 'Top 75%', color: 'text-yellow-600 dark:text-yellow-400' };
-    return { rank: 'Bottom 25%', color: 'text-orange-600 dark:text-orange-400' };
+    return { text: `-${pct}%`, color: 'text-orange-600 dark:text-orange-400' };
   };
 
   const hasActiveFilters = beltFilter || ageRangeFilter || weightFilter;
+
+  // Group techniques by position
+  const techniquesByPosition = useMemo(() => {
+    if (!data?.techniqueAverages) return {};
+    
+    let techniques = data.techniqueAverages;
+    
+    // Filter by search
+    if (techniqueSearch) {
+      const search = techniqueSearch.toLowerCase();
+      techniques = techniques.filter(t => 
+        t.name.toLowerCase().includes(search) || 
+        t.position.toLowerCase().includes(search)
+      );
+    }
+    
+    // Filter by rated only
+    if (showOnlyRated) {
+      techniques = techniques.filter(t => t.ratedCount > 0);
+    }
+    
+    const grouped: Record<string, TechniqueAverage[]> = {};
+    techniques.forEach(t => {
+      if (!grouped[t.position]) grouped[t.position] = [];
+      grouped[t.position].push(t);
+    });
+    
+    return grouped;
+  }, [data?.techniqueAverages, techniqueSearch, showOnlyRated]);
+
+  const togglePosition = (position: string) => {
+    setExpandedPositions(prev => {
+      const next = new Set(prev);
+      if (next.has(position)) {
+        next.delete(position);
+      } else {
+        next.add(position);
+      }
+      return next;
+    });
+  };
+
+  const expandAll = () => {
+    setExpandedPositions(new Set(Object.keys(techniquesByPosition)));
+  };
+
+  const collapseAll = () => {
+    setExpandedPositions(new Set());
+  };
 
   return (
     <div className="min-h-screen">
       <Navigation />
       
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center justify-center gap-3">
@@ -361,178 +443,245 @@ export default function CommunityPage() {
                 </p>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Points Comparison */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                      <TrendingUp className="text-blue-600 dark:text-blue-400" size={24} />
-                    </div>
-                    <div>
+              <>
+                {/* Overall Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {/* Points Comparison */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                        <TrendingUp className="text-blue-600 dark:text-blue-400" size={20} />
+                      </div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                        Points
+                        Total Points
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Total points earned from ratings
-                      </p>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    {/* Average */}
-                    <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="text-gray-600 dark:text-gray-400">Community Average</span>
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {data.averages.points.toLocaleString()}
+                    <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-3">
+                      <span className="text-gray-600 dark:text-gray-400">Community Avg</span>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">
+                        {(data.averages?.points ?? 0).toLocaleString()}
                       </span>
                     </div>
 
-                    {/* Your score */}
                     {isLoggedIn && myStats ? (
-                      <div className="p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border-2 border-blue-200 dark:border-blue-800">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-blue-700 dark:text-blue-300 font-medium">Your Points</span>
-                          <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                            {myStats.points.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                          <span className={getComparisonText(myStats.points, data.averages.points).color}>
-                            {getComparisonText(myStats.points, data.averages.points).text}
-                          </span>
-                          <span className={getPercentileRank(myStats.points, data.percentiles.points).color}>
-                            {getPercentileRank(myStats.points, data.percentiles.points).rank}
-                          </span>
+                      <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                        <div className="flex justify-between items-center">
+                          <span className="text-blue-700 dark:text-blue-300">Your Points</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
+                              {(myStats?.points ?? 0).toLocaleString()}
+                            </span>
+                            <span className={`text-sm ${getComparisonText(myStats?.points ?? 0, data.averages?.points ?? 0).color}`}>
+                              {getComparisonText(myStats?.points ?? 0, data.averages?.points ?? 0).text}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          <button
-                            onClick={() => router.push('/auth/login')}
-                            className="text-blue-600 dark:text-blue-400 hover:underline"
-                          >
-                            Log in
-                          </button>
-                          {' '}to see how you compare
-                        </p>
-                      </div>
+                      <p className="text-sm text-gray-500 text-center">
+                        <button onClick={() => router.push('/auth/login')} className="text-blue-600 hover:underline">Log in</button> to compare
+                      </p>
                     )}
-
-                    {/* Percentile breakdown */}
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Distribution</p>
-                      <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">25th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.points.p25}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">Median</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.points.p50}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">75th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.points.p75}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">90th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.points.p90}</p>
-                        </div>
-                      </div>
-                    </div>
                   </div>
-                </div>
 
-                {/* Techniques Rated Comparison */}
-                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                      <Target className="text-green-600 dark:text-green-400" size={24} />
-                    </div>
-                    <div>
+                  {/* Techniques Rated Comparison */}
+                  <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+                    <div className="flex items-center gap-3 mb-4">
+                      <div className="p-2 bg-green-100 dark:bg-green-900 rounded-lg">
+                        <Target className="text-green-600 dark:text-green-400" size={20} />
+                      </div>
                       <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                         Techniques Rated
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Number of techniques you've rated
-                      </p>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    {/* Average */}
-                    <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="text-gray-600 dark:text-gray-400">Community Average</span>
-                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {data.averages.techniquesRated.toLocaleString()}
+                    <div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-3">
+                      <span className="text-gray-600 dark:text-gray-400">Community Avg</span>
+                      <span className="text-xl font-bold text-gray-900 dark:text-white">
+                        {(data.averages?.techniquesRated ?? 0).toLocaleString()}
                       </span>
                     </div>
 
-                    {/* Your count */}
                     {isLoggedIn && myStats ? (
-                      <div className="p-4 bg-green-50 dark:bg-green-900/30 rounded-lg border-2 border-green-200 dark:border-green-800">
-                        <div className="flex justify-between items-center mb-2">
-                          <span className="text-green-700 dark:text-green-300 font-medium">Your Count</span>
-                          <span className="text-2xl font-bold text-green-600 dark:text-green-400">
-                            {myStats.techniquesRated.toLocaleString()}
-                          </span>
-                        </div>
-                        <div className="flex justify-between items-center text-sm">
-                          <span className={getComparisonText(myStats.techniquesRated, data.averages.techniquesRated).color}>
-                            {getComparisonText(myStats.techniquesRated, data.averages.techniquesRated).text}
-                          </span>
-                          <span className={getPercentileRank(myStats.techniquesRated, data.percentiles.techniquesRated).color}>
-                            {getPercentileRank(myStats.techniquesRated, data.percentiles.techniquesRated).rank}
-                          </span>
+                      <div className="p-3 bg-green-50 dark:bg-green-900/30 rounded-lg border border-green-200 dark:border-green-800">
+                        <div className="flex justify-between items-center">
+                          <span className="text-green-700 dark:text-green-300">Your Count</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xl font-bold text-green-600 dark:text-green-400">
+                              {(myStats?.techniquesRated ?? 0).toLocaleString()}
+                            </span>
+                            <span className={`text-sm ${getComparisonText(myStats?.techniquesRated ?? 0, data.averages?.techniquesRated ?? 0).color}`}>
+                              {getComparisonText(myStats?.techniquesRated ?? 0, data.averages?.techniquesRated ?? 0).text}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     ) : (
-                      <div className="p-4 bg-gray-100 dark:bg-gray-700 rounded-lg text-center">
-                        <p className="text-gray-500 dark:text-gray-400 text-sm">
-                          <button
-                            onClick={() => router.push('/auth/login')}
-                            className="text-blue-600 dark:text-blue-400 hover:underline"
-                          >
-                            Log in
-                          </button>
-                          {' '}to see how you compare
-                        </p>
-                      </div>
+                      <p className="text-sm text-gray-500 text-center">
+                        <button onClick={() => router.push('/auth/login')} className="text-blue-600 hover:underline">Log in</button> to compare
+                      </p>
                     )}
+                  </div>
+                </div>
 
-                    {/* Percentile breakdown */}
-                    <div className="pt-4 border-t border-gray-200 dark:border-gray-600">
-                      <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Distribution</p>
-                      <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">25th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.techniquesRated.p25}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">Median</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.techniquesRated.p50}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">75th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.techniquesRated.p75}</p>
-                        </div>
-                        <div className="p-2 bg-gray-50 dark:bg-gray-700 rounded">
-                          <p className="text-gray-500 dark:text-gray-400">90th %</p>
-                          <p className="font-bold text-gray-900 dark:text-white">{data.percentiles.techniquesRated.p90}</p>
-                        </div>
+                {/* Technique List */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
+                  <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Technique Breakdown
+                    </h3>
+                    
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      {/* Search */}
+                      <div className="flex-1 relative">
+                        <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                        <input
+                          type="text"
+                          value={techniqueSearch}
+                          onChange={(e) => setTechniqueSearch(e.target.value)}
+                          placeholder="Search techniques..."
+                          className="w-full pl-10 pr-4 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                        />
+                      </div>
+                      
+                      {/* Toggle rated only */}
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={showOnlyRated}
+                          onChange={(e) => setShowOnlyRated(e.target.checked)}
+                          className="rounded"
+                        />
+                        <span className="text-sm text-gray-700 dark:text-gray-300">Only with ratings</span>
+                      </label>
+                      
+                      {/* Expand/Collapse buttons */}
+                      <div className="flex gap-2">
+                        <button
+                          onClick={expandAll}
+                          className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                        >
+                          Expand All
+                        </button>
+                        <button
+                          onClick={collapseAll}
+                          className="px-3 py-1 text-sm bg-gray-100 dark:bg-gray-700 rounded hover:bg-gray-200 dark:hover:bg-gray-600"
+                        >
+                          Collapse All
+                        </button>
                       </div>
                     </div>
                   </div>
+
+                  <div className="divide-y divide-gray-200 dark:divide-gray-700">
+                    {Object.keys(techniquesByPosition).sort().map(position => {
+                      const techniques = techniquesByPosition[position];
+                      const isExpanded = expandedPositions.has(position);
+                      const ratedTechniques = techniques.filter(t => t.ratedCount > 0);
+                      const positionAvg = ratedTechniques.length > 0 
+                        ? ratedTechniques.reduce((sum, t) => sum + t.avgRating, 0) / ratedTechniques.length
+                        : 0;
+                      
+                      return (
+                        <div key={position}>
+                          <button
+                            onClick={() => togglePosition(position)}
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                          >
+                            <div className="flex items-center gap-3">
+                              {isExpanded ? <ChevronDown size={20} /> : <ChevronRight size={20} />}
+                              <span className="font-medium text-gray-900 dark:text-white">{position}</span>
+                              <span className="text-sm text-gray-500">({techniques.length} techniques)</span>
+                            </div>
+                            {positionAvg > 0 && (
+                              <span className={`px-2 py-1 rounded text-sm font-medium ${getRatingColor(positionAvg)}`}>
+                                Avg: {positionAvg.toFixed(1)}
+                              </span>
+                            )}
+                          </button>
+                          
+                          {isExpanded && (
+                            <div className="bg-gray-50 dark:bg-gray-900/50 overflow-x-auto">
+                              <table className="w-full">
+                                <thead>
+                                  <tr className="text-xs text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-gray-700">
+                                    <th className="px-4 py-2 text-left">Technique</th>
+                                    <th className="px-4 py-2 text-center w-24">Community Avg</th>
+                                    <th className="px-4 py-2 text-center w-20"># Rated</th>
+                                    {isLoggedIn && <th className="px-4 py-2 text-center w-20">You</th>}
+                                    {isLoggedIn && <th className="px-4 py-2 text-center w-20">Diff</th>}
+                                  </tr>
+                                </thead>
+                                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                                  {techniques.map(tech => {
+                                    const myRating = myRatings[tech.id] || 0;
+                                    const diff = myRating - tech.avgRating;
+                                    
+                                    return (
+                                      <tr key={tech.id} className="hover:bg-gray-100 dark:hover:bg-gray-800/50">
+                                        <td className="px-4 py-2">
+                                          <span className="text-gray-900 dark:text-white">{tech.name}</span>
+                                          <span className="text-xs text-gray-500 ml-2">{tech.type}</span>
+                                        </td>
+                                        <td className="px-4 py-2 text-center">
+                                          {tech.ratedCount > 0 ? (
+                                            <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${getRatingColor(tech.avgRating)}`}>
+                                              {tech.avgRating.toFixed(1)}
+                                            </span>
+                                          ) : (
+                                            <span className="text-gray-400">—</span>
+                                          )}
+                                        </td>
+                                        <td className="px-4 py-2 text-center text-sm text-gray-500">
+                                          {tech.ratedCount}
+                                        </td>
+                                        {isLoggedIn && (
+                                          <td className="px-4 py-2 text-center">
+                                            {myRating > 0 ? (
+                                              <span className={`inline-flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold ${getRatingColor(myRating)}`}>
+                                                {myRating}
+                                              </span>
+                                            ) : (
+                                              <span className="text-gray-400">—</span>
+                                            )}
+                                          </td>
+                                        )}
+                                        {isLoggedIn && (
+                                          <td className="px-4 py-2 text-center">
+                                            {myRating > 0 && tech.ratedCount > 0 ? (
+                                              <span className={`text-sm font-medium ${
+                                                diff > 0 ? 'text-green-600 dark:text-green-400' :
+                                                diff < 0 ? 'text-orange-600 dark:text-orange-400' :
+                                                'text-gray-500'
+                                              }`}>
+                                                {diff > 0 ? '+' : ''}{diff.toFixed(1)}
+                                              </span>
+                                            ) : (
+                                              <span className="text-gray-400">—</span>
+                                            )}
+                                          </td>
+                                        )}
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </>
         ) : null}
 
         {/* Footer note */}
         <p className="text-center text-sm text-gray-500 dark:text-gray-400 mt-8">
-          Only users who have opted to appear in the community are included in these statistics.
+          Statistics are calculated from all users anonymously.
           <br />
           <button
             onClick={() => router.push('/profile')}
@@ -540,7 +689,7 @@ export default function CommunityPage() {
           >
             Update your profile
           </button>
-          {' '}to be included in the community.
+          {' '}to set your belt, age, and weight for better comparisons.
         </p>
       </main>
     </div>
