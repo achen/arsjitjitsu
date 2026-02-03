@@ -21,6 +21,7 @@ model User {
   updatedAt    DateTime         @updatedAt @map("updated_at")
   ratings      UserRating[]
   notes        TechniqueNote[]
+  bookmarks    VideoBookmark[]
 
   @@map("users")
 }
@@ -43,17 +44,32 @@ model Technique {
 }
 
 model TechniqueVideo {
-  id          String    @id @default(uuid())
-  techniqueId String    @map("technique_id")
+  id          String          @id @default(uuid())
+  techniqueId String          @map("technique_id")
   title       String
   url         String
   instructor  String?
   duration    String?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+  createdAt   DateTime        @default(now()) @map("created_at")
+  technique   Technique       @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+  bookmarks   VideoBookmark[]
 
   @@index([techniqueId])
   @@map("technique_videos")
+}
+
+model VideoBookmark {
+  id        String         @id @default(uuid())
+  userId    String         @map("user_id")
+  videoId   String         @map("video_id")
+  createdAt DateTime       @default(now()) @map("created_at")
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video     TechniqueVideo @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+  @@index([userId])
+  @@index([videoId])
+  @@map("video_bookmarks")
 }
 
 model UserRating {

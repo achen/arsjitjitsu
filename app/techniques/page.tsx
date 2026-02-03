@@ -10,6 +10,7 @@ interface TechniqueVideo {
   url: string;
   instructor: string | null;
   duration: string | null;
+  isBookmarked?: boolean;
 }
 
 interface TechniqueNote {
@@ -99,6 +100,10 @@ export default function TechniquesPage() {
   const [loadingNotes, setLoadingNotes] = useState<Set<string>>(new Set());
   const [newNoteText, setNewNoteText] = useState<Record<string, string>>({});
   const [savingNote, setSavingNote] = useState<string | null>(null);
+  
+  // Bookmarks state
+  const [bookmarkedVideos, setBookmarkedVideos] = useState<Set<string>>(new Set());
+  const [togglingBookmark, setTogglingBookmark] = useState<string | null>(null);
 
   // Load collapsed groups from localStorage
   useEffect(() => {
@@ -157,7 +162,56 @@ export default function TechniquesPage() {
 
   useEffect(() => {
     checkAuth();
+    fetchBookmarks();
   }, []);
+
+  const fetchBookmarks = async () => {
+    try {
+      const res = await fetch('/api/bookmarks');
+      if (res.ok) {
+        const data = await res.json();
+        setBookmarkedVideos(new Set(data.bookmarks));
+      }
+    } catch (error) {
+      console.error('Fetch bookmarks error:', error);
+    }
+  };
+
+  const toggleBookmark = async (videoId: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!user) {
+      window.location.href = '/auth/login';
+      return;
+    }
+
+    setTogglingBookmark(videoId);
+    try {
+      const res = await fetch('/api/bookmarks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ videoId }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setBookmarkedVideos(prev => {
+          const newSet = new Set(prev);
+          if (data.bookmarked) {
+            newSet.add(videoId);
+          } else {
+            newSet.delete(videoId);
+          }
+          return newSet;
+        });
+      }
+    } catch (error) {
+      console.error('Toggle bookmark error:', error);
+    } finally {
+      setTogglingBookmark(null);
+    }
+  };
 
   useEffect(() => {
     fetchTechniques();
@@ -771,26 +825,53 @@ export default function TechniquesPage() {
                           {expandedVideos.has(technique.id) && technique.videos && technique.videos.length > 0 && (
                             <div className="mt-3 space-y-2">
                               <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Instructionals:</p>
-                              {technique.videos.map(video => (
-                                <a
+                              {[...technique.videos]
+                                .sort((a, b) => {
+                                  const aBookmarked = bookmarkedVideos.has(a.id);
+                                  const bBookmarked = bookmarkedVideos.has(b.id);
+                                  if (aBookmarked && !bBookmarked) return -1;
+                                  if (!aBookmarked && bBookmarked) return 1;
+                                  return 0;
+                                })
+                                .map(video => {
+                                  const isBookmarked = bookmarkedVideos.has(video.id);
+                                  return (
+                                <div
                                   key={video.id}
-                                  href={video.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
                                   className="flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
                                 >
-                                  <Play size={16} className="text-red-600 flex-shrink-0" />
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{video.title}</p>
-                                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                                      {video.instructor && <span>{video.instructor}</span>}
-                                      {video.instructor && video.duration && <span> • </span>}
-                                      {video.duration && <span>{video.duration}</span>}
-                                    </p>
-                                  </div>
-                                  <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
-                                </a>
-                              ))}
+                                  <button
+                                    onClick={(e) => toggleBookmark(video.id, e)}
+                                    disabled={togglingBookmark === video.id}
+                                    className={`flex-shrink-0 p-1 rounded transition-colors ${
+                                      isBookmarked 
+                                        ? 'text-yellow-500 hover:text-yellow-600' 
+                                        : 'text-gray-300 hover:text-yellow-400'
+                                    } ${togglingBookmark === video.id ? 'opacity-50' : ''}`}
+                                    title={isBookmarked ? 'Remove bookmark' : 'Bookmark video'}
+                                  >
+                                    <Star size={16} fill={isBookmarked ? 'currentColor' : 'none'} />
+                                  </button>
+                                  <a
+                                    href={video.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2 flex-1 min-w-0"
+                                  >
+                                    <Play size={16} className="text-red-600 flex-shrink-0" />
+                                    <div className="flex-1 min-w-0">
+                                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">{video.title}</p>
+                                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                                        {video.instructor && <span>{video.instructor}</span>}
+                                        {video.instructor && video.duration && <span> • </span>}
+                                        {video.duration && <span>{video.duration}</span>}
+                                      </p>
+                                    </div>
+                                    <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
+                                  </a>
+                                </div>
+                                  );
+                                })}
                             </div>
                           )}
 
