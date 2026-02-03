@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { getSession } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
 
 // GET /api/bookmarks - Get user's bookmarked video IDs
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.userId) {
+    const user = await getCurrentUser();
+    if (!user?.id) {
       return NextResponse.json({ bookmarks: [] });
     }
 
     const bookmarks = await prisma.videoBookmark.findMany({
-      where: { userId: session.userId },
+      where: { userId: user.id },
       select: { videoId: true },
     });
 
@@ -27,8 +27,8 @@ export async function GET(request: NextRequest) {
 // POST /api/bookmarks - Toggle bookmark for a video
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session?.userId) {
+    const user = await getCurrentUser();
+    if (!user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
     const existing = await prisma.videoBookmark.findUnique({
       where: {
         userId_videoId: {
-          userId: session.userId,
+          userId: user.id,
           videoId,
         },
       },
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       // Add bookmark
       await prisma.videoBookmark.create({
         data: {
-          userId: session.userId,
+          userId: user.id,
           videoId,
         },
       });
