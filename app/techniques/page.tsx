@@ -137,9 +137,27 @@ export default function TechniquesPage() {
   const [reassignTechniqueId, setReassignTechniqueId] = useState('');
   const [reassignSearch, setReassignSearch] = useState('');
   const [savingReassign, setSavingReassign] = useState(false);
+  
+  // Create technique in reassign modal state
+  const [showReassignCreateForm, setShowReassignCreateForm] = useState(false);
+  const [reassignCreateForm, setReassignCreateForm] = useState({ name: '', position: '', type: 'Submission', giType: 'nogi' });
+  const [savingReassignCreate, setSavingReassignCreate] = useState(false);
+  const [reassignCreateError, setReassignCreateError] = useState<string | null>(null);
+  const [scrollToTechniqueId, setScrollToTechniqueId] = useState<string | null>(null);
 
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
+
+  // Scroll to newly created technique in reassign modal
+  useEffect(() => {
+    if (scrollToTechniqueId) {
+      const element = document.getElementById(`reassign-tech-${scrollToTechniqueId}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setScrollToTechniqueId(null);
+    }
+  }, [scrollToTechniqueId]);
 
   // Load collapsed groups from localStorage
   useEffect(() => {
@@ -692,6 +710,9 @@ export default function TechniquesPage() {
     setReassigningVideo(null);
     setReassignTechniqueId('');
     setReassignSearch('');
+    setShowReassignCreateForm(false);
+    setReassignCreateForm({ name: '', position: '', type: 'Submission', giType: 'nogi' });
+    setReassignCreateError(null);
   };
 
   const reassignVideo = async () => {
@@ -734,6 +755,55 @@ export default function TechniquesPage() {
       alert('Network error');
     } finally {
       setSavingReassign(false);
+    }
+  };
+
+  // Create a new technique and select it for reassignment
+  const createTechniqueForReassign = async () => {
+    if (!reassignCreateForm.name || !reassignCreateForm.position || !reassignCreateForm.type) {
+      setReassignCreateError('Please fill in name, position, and type');
+      return;
+    }
+    
+    setSavingReassignCreate(true);
+    setReassignCreateError(null);
+    
+    try {
+      const res = await fetch('/api/admin/techniques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: reassignCreateForm.name,
+          position: reassignCreateForm.position,
+          type: reassignCreateForm.type,
+          giType: reassignCreateForm.giType,
+        }),
+      });
+
+      if (res.ok) {
+        const { technique } = await res.json();
+        // Add the new technique to the list with default values
+        setTechniques(prev => [...prev, { 
+          ...technique, 
+          rating: null, 
+          notes: null, 
+          workingOn: false, 
+          videos: [] 
+        }]);
+        // Auto-select the new technique and scroll to it
+        setReassignTechniqueId(technique.id);
+        setScrollToTechniqueId(technique.id);
+        // Hide the create form and reset it
+        setShowReassignCreateForm(false);
+        setReassignCreateForm({ name: '', position: '', type: 'Submission', giType: 'nogi' });
+      } else {
+        const data = await res.json();
+        setReassignCreateError(data.error || 'Failed to create technique');
+      }
+    } catch (error) {
+      setReassignCreateError('Network error');
+    } finally {
+      setSavingReassignCreate(false);
     }
   };
 
@@ -1796,20 +1866,113 @@ export default function TechniquesPage() {
               </p>
             </div>
 
-            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-              <input
-                type="text"
-                value={reassignSearch}
-                onChange={(e) => setReassignSearch(e.target.value)}
-                placeholder="Search techniques..."
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
+            {/* Create New Technique Form */}
+            {showReassignCreateForm ? (
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-semibold text-gray-900 dark:text-white">Create New Technique</h3>
+                  <button
+                    onClick={() => {
+                      setShowReassignCreateForm(false);
+                      setReassignCreateForm({ name: '', position: '', type: 'Submission', giType: 'nogi' });
+                      setReassignCreateError(null);
+                    }}
+                    className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                  >
+                    <X size={18} />
+                  </button>
+                </div>
+                
+                {reassignCreateError && (
+                  <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/30 p-2 rounded">
+                    {reassignCreateError}
+                  </div>
+                )}
+                
+                <input
+                  type="text"
+                  value={reassignCreateForm.name}
+                  onChange={(e) => setReassignCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                  placeholder="Technique name *"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                />
+                
+                <select
+                  value={reassignCreateForm.position}
+                  onChange={(e) => setReassignCreateForm(prev => ({ ...prev, position: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                >
+                  <option value="">Select position *</option>
+                  {uniquePositions.map(pos => (
+                    <option key={pos} value={pos}>{pos}</option>
+                  ))}
+                </select>
+                
+                <div className="flex gap-2">
+                  <select
+                    value={reassignCreateForm.type}
+                    onChange={(e) => setReassignCreateForm(prev => ({ ...prev, type: e.target.value }))}
+                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    {TYPES.map(type => (
+                      <option key={type} value={type}>{type}</option>
+                    ))}
+                  </select>
+                  
+                  <select
+                    value={reassignCreateForm.giType}
+                    onChange={(e) => setReassignCreateForm(prev => ({ ...prev, giType: e.target.value }))}
+                    className="w-28 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                  >
+                    <option value="gi">Gi</option>
+                    <option value="nogi">No-Gi</option>
+                  </select>
+                </div>
+                
+                <button
+                  onClick={createTechniqueForReassign}
+                  disabled={savingReassignCreate || !reassignCreateForm.name || !reassignCreateForm.position}
+                  className="w-full px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 text-sm"
+                >
+                  {savingReassignCreate ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Plus size={14} />
+                      Create & Select
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              <div className="p-4 border-b border-gray-200 dark:border-gray-700 space-y-2">
+                <input
+                  type="text"
+                  value={reassignSearch}
+                  onChange={(e) => setReassignSearch(e.target.value)}
+                  placeholder="Search techniques..."
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                {user?.isAdmin && (
+                  <button
+                    onClick={() => setShowReassignCreateForm(true)}
+                    className="w-full px-3 py-2 border border-dashed border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-2 text-sm"
+                  >
+                    <Plus size={16} />
+                    Create New Technique
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="flex-1 overflow-y-auto p-4 space-y-1 max-h-[50vh]">
               {filteredTechniquesForReassign.slice(0, 100).map(t => (
                 <button
                   key={t.id}
+                  id={`reassign-tech-${t.id}`}
                   onClick={() => setReassignTechniqueId(t.id)}
                   className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
                     reassignTechniqueId === t.id
