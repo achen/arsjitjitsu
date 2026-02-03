@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2, Link2, Loader2 } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2, Link2, Loader2, Copy } from 'lucide-react';
 
 interface TechniqueVideo {
   id: string;
@@ -120,6 +120,9 @@ export default function TechniquesPage() {
   
   // Admin delete video state
   const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
+  
+  // Admin duplicate state
+  const [duplicatingId, setDuplicatingId] = useState<string | null>(null);
   
   // Admin add video state
   const [addingVideoToTechnique, setAddingVideoToTechnique] = useState<string | null>(null);
@@ -314,6 +317,36 @@ export default function TechniquesPage() {
       setEditError('Network error');
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const duplicateTechnique = async (technique: Technique) => {
+    setDuplicatingId(technique.id);
+    
+    try {
+      const res = await fetch('/api/admin/techniques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${technique.name} (Copy)`,
+          position: technique.position,
+          type: technique.type,
+          description: technique.description || null,
+          giType: technique.giType,
+        }),
+      });
+
+      if (res.ok) {
+        const { technique: newTechnique } = await res.json();
+        setTechniques(prev => [...prev, { ...newTechnique, rating: null, workingOn: false, videos: [] }]);
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to duplicate');
+      }
+    } catch (error) {
+      alert('Network error');
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -1150,6 +1183,17 @@ export default function TechniquesPage() {
                               >
                                 <Edit2 size={12} />
                                 Edit
+                              </button>
+                            )}
+                            {/* Admin Duplicate button */}
+                            {user?.isAdmin && (
+                              <button
+                                onClick={() => duplicateTechnique(technique)}
+                                disabled={duplicatingId === technique.id}
+                                className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50"
+                              >
+                                <Copy size={12} />
+                                {duplicatingId === technique.id ? 'Duplicating...' : 'Duplicate'}
                               </button>
                             )}
                             {/* Admin Add Video button */}
