@@ -138,15 +138,19 @@ export default function Navigation() {
                       </div>
                     )}
                     
-                    <div className="flex items-center space-x-2 px-3 py-2">
+                    <Link
+                      href="/profile?tab=edit"
+                      className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                      title="Edit Profile"
+                    >
                       <div
                         className={`w-4 h-4 rounded-full ${getBeltColor(user.belt)} border`}
                         title={`${user.belt} belt`}
                       />
-                      <span className="text-gray-700 dark:text-gray-200">
+                      <span className="text-gray-700 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400">
                         {user.name}
                       </span>
-                    </div>
+                    </Link>
                     <button
                       onClick={handleLogout}
                       className="flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
@@ -223,10 +227,14 @@ export default function Navigation() {
                   </Link>
                 )}
                 
-                <div className="flex items-center space-x-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700">
+                <Link
+                  href="/profile?tab=edit"
+                  className="flex items-center space-x-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
+                  onClick={() => setMenuOpen(false)}
+                >
                   <User size={20} />
-                  <span>{user.name}</span>
-                </div>
+                  <span className="hover:text-blue-600 dark:hover:text-blue-400">{user.name}</span>
+                </Link>
                 <button
                   onClick={() => {
                     handleLogout();

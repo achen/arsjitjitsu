@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import { Trophy, Target, TrendingUp, Clock, Edit2, MapPin, Building2, Calendar, Globe, User as UserIcon, X, Check, Plus, Trash2 } from 'lucide-react';
 
@@ -200,11 +200,15 @@ function ScoreChart({ data }: { data: ScorePoint[] }) {
 
 export default function ProfilePage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
   const [scoreHistory, setScoreHistory] = useState<ScorePoint[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'types' | 'profile'>('overview');
+  
+  // Check for tab query param to open edit profile directly
+  const initialTab = searchParams.get('tab') === 'edit' ? 'profile' : 'overview';
+  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'types' | 'profile'>(initialTab);
   
   // Edit profile state
   const [profileForm, setProfileForm] = useState({
