@@ -1,26 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma, { TechniqueWithRating } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
-import { rateLimit, getClientIdentifier, rateLimitHeaders, RATE_LIMITS } from '@/lib/rateLimit';
-
-// Number of techniques to show as preview for unauthenticated users
-const PREVIEW_LIMIT = 20;
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
-  
-  // Rate limit unauthenticated requests
-  if (!user) {
-    const clientId = getClientIdentifier(request);
-    const rateLimitResult = rateLimit(clientId, RATE_LIMITS.heavyRead);
-    
-    if (!rateLimitResult.success) {
-      return NextResponse.json(
-        { error: 'Too many requests. Please sign in or slow down.' },
-        { status: 429, headers: rateLimitHeaders(rateLimitResult) }
-      );
-    }
-  }
 
   try {
     const { searchParams } = new URL(request.url);
@@ -45,23 +28,18 @@ export async function GET(request: NextRequest) {
       ];
     }
 
-    // Get total count for unauthenticated users to show how many more exist
-    const totalCount = !user ? await prisma.technique.count({ where }) : 0;
-
     const techniques = await prisma.technique.findMany({
       where,
-      // Limit results for unauthenticated users to prevent scraping
-      take: user ? undefined : PREVIEW_LIMIT,
       include: {
         ratings: user ? {
           where: { userId: user.id },
           select: { rating: true, notes: true, workingOn: true },
         } : false,
-        // Don't include videos for unauthenticated users
-        videos: user ? {
+        // Include videos for all users
+        videos: {
           select: { id: true, title: true, url: true, instructor: true, duration: true },
           orderBy: { createdAt: 'asc' },
-        } : false,
+        },
       },
       orderBy: [
         { position: 'asc' },
@@ -84,15 +62,7 @@ export async function GET(request: NextRequest) {
       videos: tech.videos || [],
     }));
 
-    return NextResponse.json({ 
-      techniques: formattedTechniques,
-      // Include metadata for unauthenticated users
-      ...(!user && {
-        isPreview: true,
-        previewCount: PREVIEW_LIMIT,
-        totalCount,
-      }),
-    });
+    return NextResponse.json({ techniques: formattedTechniques });
   } catch (error) {
     console.error('Get techniques error:', error);
     return NextResponse.json(
