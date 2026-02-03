@@ -118,7 +118,7 @@ export default function HomePage() {
               'Mount', 'Side Control', 'Back Control', 'Closed Guard', 
               'Half Guard', 'Butterfly Guard', 'De La Riva', 'Spider Guard',
               'X-Guard', 'Lasso Guard', '50/50', 'Standing', 'Turtle',
-              'North-South', 'Knee on Belly', 'Leg Entanglement'
+              'North-South', 'Knee on Belly', 'Leg Entanglement', 'Mobility'
             ].map((position) => (
               <span
                 key={position}
