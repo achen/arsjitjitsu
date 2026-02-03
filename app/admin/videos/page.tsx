@@ -41,21 +41,8 @@ interface Stats {
   unmapped: number;
 }
 
-const POSITIONS = [
-  'Mount Top', 'Mount Bottom', 'Side Control Top', 'Side Control Bottom',
-  'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
-  'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'Butterfly Half',
-  'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'Collar Sleeve Guard', 'X-Guard', 'Single Leg X',
-  '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground', 'K Guard',
-  'Rubber Guard', 'Worm Guard', 'Waiter Guard', 'Williams Guard', 'Standing',
-  'Turtle Top', 'Turtle Bottom', 'North-South Top', 'North-South Bottom',
-  'Knee on Belly Top', 'Knee on Belly Bottom', 'Crucifix', 'Truck',
-  'Ashi Garami', 'Outside Ashi', 'Saddle', 'Backside 50/50', 'False Reap', 'Sambo Knot',
-  'Kesa Gatame', 'Kuzure Kesa Gatame',
-];
-
 const TYPES = [
-  'Escape', 'Sweep', 'Reversal', 'Takedown', 'Submission', 'Pass', 'Transition', 'Setup', 'Defense', 'Variant', 'Entry'
+  'Escape', 'Sweep', 'Reversal', 'Takedown', 'Submission', 'Pass', 'Transition', 'Setup', 'Defense', 'Variant', 'Entry', 'Mobility'
 ];
 
 export default function AdminVideosPage() {
@@ -598,7 +585,7 @@ export default function AdminVideosPage() {
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="">Position *</option>
-                      {POSITIONS.map(p => (
+                      {techniquePositions.map(p => (
                         <option key={p} value={p}>{p}</option>
                       ))}
                     </select>
