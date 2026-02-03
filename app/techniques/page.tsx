@@ -719,6 +719,9 @@ export default function TechniquesPage() {
                               {technique.type}
                             </span>
                             <h3 className="font-medium text-gray-900 dark:text-white truncate">
+                              <span className={`text-xs font-semibold mr-1 ${technique.giType === 'gi' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                                [{technique.giType === 'gi' ? 'Gi' : 'No-Gi'}]
+                              </span>
                               {technique.name}
                             </h3>
                             {/* Videos button */}
