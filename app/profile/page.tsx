@@ -46,6 +46,11 @@ interface Stats {
   recentRatings: RecentRating[];
 }
 
+interface ScorePoint {
+  date: string;
+  score: number;
+}
+
 const RATING_LABELS = [
   "Don't know",
   "White",
@@ -57,10 +62,142 @@ const RATING_LABELS = [
   "World"
 ];
 
+// Simple SVG Line Chart component
+function ScoreChart({ data }: { data: ScorePoint[] }) {
+  if (data.length < 2) return null;
+
+  const width = 600;
+  const height = 200;
+  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+
+  const scores = data.map(d => d.score);
+  const minScore = Math.min(...scores);
+  const maxScore = Math.max(...scores);
+  const scoreRange = maxScore - minScore || 1;
+
+  const dates = data.map(d => new Date(d.date).getTime());
+  const minDate = Math.min(...dates);
+  const maxDate = Math.max(...dates);
+  const dateRange = maxDate - minDate || 1;
+
+  const getX = (date: string) => {
+    const t = new Date(date).getTime();
+    return padding.left + ((t - minDate) / dateRange) * chartWidth;
+  };
+
+  const getY = (score: number) => {
+    return padding.top + chartHeight - ((score - minScore) / scoreRange) * chartHeight;
+  };
+
+  // Create path
+  const pathD = data.map((point, i) => {
+    const x = getX(point.date);
+    const y = getY(point.score);
+    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
+  }).join(' ');
+
+  // Create area fill path
+  const areaD = pathD + ` L ${getX(data[data.length - 1].date)} ${padding.top + chartHeight} L ${getX(data[0].date)} ${padding.top + chartHeight} Z`;
+
+  // Format date for display
+  const formatDate = (dateStr: string) => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  };
+
+  // Y-axis labels
+  const yLabels = [minScore, Math.round((minScore + maxScore) / 2), maxScore];
+
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
+      {/* Grid lines */}
+      {yLabels.map(score => (
+        <g key={score}>
+          <line
+            x1={padding.left}
+            y1={getY(score)}
+            x2={width - padding.right}
+            y2={getY(score)}
+            stroke="currentColor"
+            strokeOpacity={0.1}
+            strokeDasharray="4 4"
+          />
+          <text
+            x={padding.left - 8}
+            y={getY(score)}
+            textAnchor="end"
+            alignmentBaseline="middle"
+            className="fill-gray-500 text-xs"
+          >
+            {score}
+          </text>
+        </g>
+      ))}
+
+      {/* Area fill */}
+      <path
+        d={areaD}
+        fill="url(#gradient)"
+        opacity={0.3}
+      />
+
+      {/* Line */}
+      <path
+        d={pathD}
+        fill="none"
+        stroke="#3B82F6"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+
+      {/* Data points */}
+      {data.map((point, i) => (
+        <circle
+          key={i}
+          cx={getX(point.date)}
+          cy={getY(point.score)}
+          r={3}
+          fill="#3B82F6"
+        />
+      ))}
+
+      {/* X-axis labels (first and last) */}
+      <text
+        x={getX(data[0].date)}
+        y={height - 10}
+        textAnchor="start"
+        className="fill-gray-500 text-xs"
+      >
+        {formatDate(data[0].date)}
+      </text>
+      <text
+        x={getX(data[data.length - 1].date)}
+        y={height - 10}
+        textAnchor="end"
+        className="fill-gray-500 text-xs"
+      >
+        {formatDate(data[data.length - 1].date)}
+      </text>
+
+      {/* Gradient definition */}
+      <defs>
+        <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
+        </linearGradient>
+      </defs>
+    </svg>
+  );
+}
+
 export default function ProfilePage() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [scoreHistory, setScoreHistory] = useState<ScorePoint[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'types'>('overview');
 
@@ -78,6 +215,7 @@ export default function ProfilePage() {
       const data = await res.json();
       setUser(data.user);
       fetchStats();
+      fetchScoreHistory();
     } catch (error) {
       console.error('Auth check error:', error);
       router.push('/auth/login');
@@ -95,6 +233,18 @@ export default function ProfilePage() {
       console.error('Fetch stats error:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchScoreHistory = async () => {
+    try {
+      const res = await fetch('/api/stats/history');
+      if (res.ok) {
+        const data = await res.json();
+        setScoreHistory(data.timeline);
+      }
+    } catch (error) {
+      console.error('Fetch score history error:', error);
     }
   };
 
@@ -239,6 +389,18 @@ export default function ProfilePage() {
           <div className="p-6">
             {activeTab === 'overview' && (
               <div className="space-y-6">
+                {/* Score History Chart */}
+                {scoreHistory.length > 1 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                      Score History
+                    </h3>
+                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                      <ScoreChart data={scoreHistory} />
+                    </div>
+                  </div>
+                )}
+
                 {/* Score Progress */}
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">

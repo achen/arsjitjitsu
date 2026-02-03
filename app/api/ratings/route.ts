@@ -59,6 +59,17 @@ export async function POST(request: NextRequest) {
     if (notes !== undefined) data.notes = notes || null;
     if (workingOn !== undefined) data.workingOn = workingOn;
 
+    // Get existing rating to track history
+    const existingRating = await prisma.userRating.findUnique({
+      where: {
+        userId_techniqueId: {
+          userId: user.id,
+          techniqueId,
+        },
+      },
+      select: { rating: true },
+    });
+
     // Upsert rating
     const result = await prisma.userRating.upsert({
       where: {
@@ -76,6 +87,21 @@ export async function POST(request: NextRequest) {
         workingOn: workingOn ?? false,
       },
     });
+
+    // Log rating history if rating changed
+    if (rating !== undefined) {
+      const oldRating = existingRating?.rating ?? null;
+      if (oldRating !== rating) {
+        await prisma.ratingHistory.create({
+          data: {
+            userId: user.id,
+            techniqueId,
+            oldRating,
+            newRating: rating,
+          },
+        });
+      }
+    }
 
     return NextResponse.json({
       message: 'Rating saved successfully',

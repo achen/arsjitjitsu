@@ -55,6 +55,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get existing ratings to track history
+    const existingRatings = await prisma.userRating.findMany({
+      where: {
+        userId: user.id,
+        techniqueId: { in: techniqueIds },
+      },
+      select: { techniqueId: true, rating: true },
+    });
+    const existingRatingsMap = new Map(existingRatings.map(r => [r.techniqueId, r.rating]));
+
     // Upsert all ratings in a transaction
     const results = await prisma.$transaction(
       techniqueIds.map(techniqueId =>
@@ -76,6 +86,28 @@ export async function POST(request: NextRequest) {
         })
       )
     );
+
+    // Log rating history for all changes
+    const historyEntries = techniqueIds
+      .map(techniqueId => {
+        const oldRating = existingRatingsMap.get(techniqueId) ?? null;
+        if (oldRating !== rating) {
+          return {
+            userId: user.id,
+            techniqueId,
+            oldRating,
+            newRating: rating,
+          };
+        }
+        return null;
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null);
+
+    if (historyEntries.length > 0) {
+      await prisma.ratingHistory.createMany({
+        data: historyEntries,
+      });
+    }
 
     return NextResponse.json({
       success: true,

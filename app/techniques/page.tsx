@@ -1817,8 +1817,15 @@ export default function TechniquesPage() {
                       : 'hover:bg-gray-100 dark:hover:bg-gray-700'
                   }`}
                 >
-                  <p className="font-medium text-gray-900 dark:text-white">{t.name}</p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                  <p className="font-medium text-gray-900 dark:text-white">
+                    <span className={`inline-block w-12 text-xs font-medium mr-2 ${
+                      t.giType === 'gi' ? 'text-blue-600 dark:text-blue-400' : 'text-orange-600 dark:text-orange-400'
+                    }`}>
+                      [{t.giType === 'gi' ? 'Gi' : 'No-Gi'}]
+                    </span>
+                    {t.name}
+                  </p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 ml-14">
                     {t.position} • {t.type}
                   </p>
                 </button>

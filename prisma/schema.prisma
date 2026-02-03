@@ -11,32 +11,34 @@ datasource db {
 }
 
 model User {
-  id           String           @id @default(uuid())
-  email        String           @unique
-  passwordHash String           @map("password_hash")
-  name         String
-  belt         String           @default("white")
-  isAdmin      Boolean          @default(false) @map("is_admin")
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @updatedAt @map("updated_at")
-  ratings      UserRating[]
-  notes        TechniqueNote[]
-  bookmarks    VideoBookmark[]
+  id            String           @id @default(uuid())
+  email         String           @unique
+  passwordHash  String           @map("password_hash")
+  name          String
+  belt          String           @default("white")
+  isAdmin       Boolean          @default(false) @map("is_admin")
+  createdAt     DateTime         @default(now()) @map("created_at")
+  updatedAt     DateTime         @updatedAt @map("updated_at")
+  ratings       UserRating[]
+  notes         TechniqueNote[]
+  bookmarks     VideoBookmark[]
+  ratingHistory RatingHistory[]
 
   @@map("users")
 }
 
 model Technique {
-  id          String            @id @default(uuid())
-  name        String
-  position    String
-  type        String
-  description String?
-  giType      String            @default("both") @map("gi_type")
-  createdAt   DateTime          @default(now()) @map("created_at")
-  ratings     UserRating[]
-  videos      TechniqueVideo[]
-  notes       TechniqueNote[]
+  id            String            @id @default(uuid())
+  name          String
+  position      String
+  type          String
+  description   String?
+  giType        String            @default("both") @map("gi_type")
+  createdAt     DateTime          @default(now()) @map("created_at")
+  ratings       UserRating[]
+  videos        TechniqueVideo[]
+  notes         TechniqueNote[]
+  ratingHistory RatingHistory[]
 
   @@index([position])
   @@index([type])
@@ -102,4 +104,20 @@ model TechniqueNote {
   @@index([techniqueId])
   @@index([createdAt])
   @@map("technique_notes")
+}
+
+model RatingHistory {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  techniqueId String    @map("technique_id")
+  oldRating   Int?      @map("old_rating")
+  newRating   Int       @map("new_rating")
+  changedAt   DateTime  @default(now()) @map("changed_at")
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  technique   Technique @relation(fields: [techniqueId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, changedAt])
+  @@index([techniqueId])
+  @@map("rating_history")
 }
