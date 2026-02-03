@@ -81,10 +81,10 @@ const techniques: Technique[] = [
   { name: 'Guillotine', position: 'Closed Guard Bottom', type: 'Submission', description: 'Front headlock choke', gi_type: 'both' },
   { name: 'Cross Collar Choke', position: 'Closed Guard Bottom', type: 'Submission', description: 'Gi choke from closed guard', gi_type: 'gi' },
   { name: 'Hip Bump Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Sit-up sweep', gi_type: 'both' },
-  { name: 'Scissor Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Classic sweep with collar and sleeve', gi_type: 'gi' },
+  { name: 'Scissor Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Classic sweep with collar and sleeve', gi_type: 'both' },
   { name: 'Flower Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Pendulum sweep', gi_type: 'both' },
   { name: 'Elevator Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Hook sweep variation', gi_type: 'both' },
-  { name: 'Lumberjack Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Two-on-one sleeve control sweep', gi_type: 'gi' },
+  { name: 'Lumberjack Sweep', position: 'Closed Guard Bottom', type: 'Sweep', description: 'Two-on-one sleeve control sweep', gi_type: 'both' },
   { name: 'Back Take from Guard', position: 'Closed Guard Bottom', type: 'Transition', description: 'Taking back from closed guard', gi_type: 'both' },
 
   // Closed Guard Top

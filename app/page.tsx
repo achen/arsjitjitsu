@@ -39,28 +39,35 @@ export default function HomePage() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
-              { value: 0, label: "Don't know it", color: 'bg-gray-200' },
-              { value: 1, label: 'White belts', color: 'bg-white border-2 border-gray-300' },
-              { value: 2, label: 'Blue belts', color: 'bg-blue-500' },
-              { value: 3, label: 'Purple belts', color: 'bg-purple-500' },
-              { value: 4, label: 'Brown belts', color: 'bg-amber-700' },
-              { value: 5, label: 'Black belts', color: 'bg-gray-900' },
-              { value: 6, label: 'Competition black belts', color: 'bg-gray-900 ring-2 ring-yellow-400' },
-              { value: 7, label: 'World class', color: 'bg-gradient-to-r from-yellow-400 to-yellow-600' },
+              { value: 0, label: "Don't know it" },
+              { value: 1, label: 'Can execute on white belts' },
+              { value: 2, label: 'Can execute on blue belts' },
+              { value: 3, label: 'Can execute on purple belts' },
+              { value: 4, label: 'Can execute on brown belts' },
+              { value: 5, label: 'Can execute on black belts' },
+              { value: 6, label: 'Competition black belt level' },
+              { value: 7, label: 'World class level' },
             ].map((level) => (
               <div
                 key={level.value}
                 className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-700"
               >
                 <div
-                  className={`w-8 h-8 rounded-full ${level.color} flex items-center justify-center text-xs font-bold ${
-                    level.value > 0 && level.value < 5 ? 'text-white' : ''
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
+                    level.value === 0 ? 'bg-gray-200 text-gray-900' :
+                    level.value === 1 ? 'bg-white border-2 border-gray-300 text-gray-900' :
+                    level.value === 2 ? 'bg-blue-500 text-white' :
+                    level.value === 3 ? 'bg-purple-500 text-white' :
+                    level.value === 4 ? 'bg-amber-700 text-white' :
+                    level.value === 5 ? 'bg-gray-900 text-white' :
+                    level.value === 6 ? 'bg-gray-900 ring-2 ring-yellow-400 text-white' :
+                    'bg-gradient-to-r from-yellow-400 to-yellow-600'
                   }`}
                 >
                   {level.value}
                 </div>
                 <span className="text-gray-700 dark:text-gray-200 text-sm">
-                  Can execute on {level.label}
+                  {level.label}
                 </span>
               </div>
             ))}

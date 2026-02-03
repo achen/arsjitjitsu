@@ -63,7 +63,7 @@ export default function Navigation() {
             <Link href="/" className="flex items-center space-x-2">
               <span className="text-2xl">🥋</span>
               <span className="font-bold text-xl text-gray-900 dark:text-white">
-                BJJ Tracker
+                arsjiujitsu
               </span>
             </Link>
           </div>
