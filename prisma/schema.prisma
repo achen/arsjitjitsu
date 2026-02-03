@@ -47,6 +47,19 @@ model BeltHistory {
   @@map("belt_history")
 }
 
+model Position {
+  id             String   @id @default(uuid())
+  name           String   @unique
+  description    String?
+  alternateNames String[] @map("alternate_names")
+  sortOrder      Int      @default(0) @map("sort_order")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@index([name])
+  @@map("positions")
+}
+
 model Technique {
   id            String            @id @default(uuid())
   name          String

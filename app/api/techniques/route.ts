@@ -14,7 +14,20 @@ export async function GET(request: NextRequest) {
     const where: any = {};
 
     if (position) {
-      where.position = position;
+      // Check if this position value matches any alternate names
+      const matchingPosition = await prisma.position.findFirst({
+        where: {
+          OR: [
+            { name: { equals: position, mode: 'insensitive' } },
+            { alternateNames: { has: position } },
+            // Also check case-insensitive alternate names
+            { alternateNames: { hasSome: [position, position.toLowerCase(), position.toUpperCase()] } },
+          ],
+        },
+      });
+      
+      // Use the canonical position name if found, otherwise use the original
+      where.position = matchingPosition?.name || position;
     }
 
     if (type) {
@@ -22,9 +35,23 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
+      // Find positions that match the search term (by name or alternate names)
+      const matchingPositions = await prisma.position.findMany({
+        where: {
+          OR: [
+            { name: { contains: search, mode: 'insensitive' } },
+            { alternateNames: { hasSome: [search, search.toLowerCase(), search.toUpperCase()] } },
+          ],
+        },
+        select: { name: true },
+      });
+      const matchingPositionNames = matchingPositions.map(p => p.name);
+
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
         { description: { contains: search, mode: 'insensitive' } },
+        // Also match techniques in positions with matching alternate names
+        ...(matchingPositionNames.length > 0 ? [{ position: { in: matchingPositionNames } }] : []),
       ];
     }
 
