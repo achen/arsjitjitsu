@@ -94,7 +94,7 @@ export default function AdminVideosPage() {
     position: '',
     type: 'Submission',
     description: '',
-    giType: 'both',
+    giType: 'gi',
   });
   const [creatingTechnique, setCreatingTechnique] = useState(false);
 
@@ -191,10 +191,15 @@ export default function AdminVideosPage() {
 
       if (res.ok) {
         setMapSuccess(`Mapped to "${technique.name}"`);
-        // Mark video as mapped locally
-        setVideos(prev => prev.map(v => 
-          v.id === selectedVideo.id ? { ...v, isMapped: true } : v
-        ));
+        // Remove video from list if on unmapped filter, otherwise mark as mapped
+        if (mappedFilter === 'unmapped') {
+          setVideos(prev => prev.filter(v => v.id !== selectedVideo.id));
+          setSelectedVideo(null);
+        } else {
+          setVideos(prev => prev.map(v => 
+            v.id === selectedVideo.id ? { ...v, isMapped: true } : v
+          ));
+        }
         // Update stats
         if (stats) {
           setStats({ ...stats, mapped: stats.mapped + 1, unmapped: stats.unmapped - 1 });
@@ -259,17 +264,22 @@ export default function AdminVideosPage() {
         setMapSuccess(`Created "${technique.name}" and mapped video!`);
         // Add to techniques list
         setTechniques(prev => [...prev, technique].sort((a, b) => a.name.localeCompare(b.name)));
-        // Mark video as mapped locally
-        setVideos(prev => prev.map(v => 
-          v.id === selectedVideo.id ? { ...v, isMapped: true } : v
-        ));
+        // Remove video from list if on unmapped filter, otherwise mark as mapped
+        if (mappedFilter === 'unmapped') {
+          setVideos(prev => prev.filter(v => v.id !== selectedVideo.id));
+          setSelectedVideo(null);
+        } else {
+          setVideos(prev => prev.map(v => 
+            v.id === selectedVideo.id ? { ...v, isMapped: true } : v
+          ));
+        }
         // Update stats
         if (stats) {
           setStats({ ...stats, mapped: stats.mapped + 1, unmapped: stats.unmapped - 1 });
         }
         // Reset form
         setShowNewTechniqueForm(false);
-        setNewTechnique({ name: '', position: '', type: 'Submission', description: '', giType: 'both' });
+        setNewTechnique({ name: '', position: '', type: 'Submission', description: '', giType: 'gi' });
         setTimeout(() => setMapSuccess(null), 3000);
       } else {
         const data = await mapRes.json();
@@ -334,7 +344,7 @@ export default function AdminVideosPage() {
           <p className="text-gray-600 dark:text-gray-400 mb-6">
             {stats.total.toLocaleString()} total videos • 
             <span className="text-green-600"> {stats.mapped.toLocaleString()} mapped</span> • 
-            <span className="text-orange-600"> {stats.unmapped.toLocaleString()} unmapped</span>
+            <span className="text-gray-600 dark:text-gray-400"> {stats.unmapped.toLocaleString()} unmapped</span>
           </p>
         )}
 
@@ -610,9 +620,8 @@ export default function AdminVideosPage() {
                       onChange={(e) => setNewTechnique(prev => ({ ...prev, giType: e.target.value }))}
                       className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
-                      <option value="both">Both (Gi & No-Gi)</option>
-                      <option value="gi">Gi Only</option>
-                      <option value="nogi">No-Gi Only</option>
+                      <option value="gi">Gi</option>
+                      <option value="nogi">No-Gi</option>
                     </select>
                     
                     <input
