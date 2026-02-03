@@ -19,6 +19,7 @@ model User {
   isAdmin       Boolean          @default(false) @map("is_admin")
   isPublic      Boolean          @default(false) @map("is_public")
   birthDate     DateTime?        @map("birth_date")
+  weight        String?          // Weight class: rooster, light-feather, feather, light, middle, medium-heavy, heavy, super-heavy, ultra-heavy
   country       String?
   city          String?
   gym           String?

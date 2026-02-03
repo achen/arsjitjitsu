@@ -19,6 +19,7 @@ interface User {
   belt: string;
   isPublic: boolean;
   birthDate: string | null;
+  weight: string | null;
   country: string | null;
   city: string | null;
   gym: string | null;
@@ -54,6 +55,19 @@ const ADULT_BELTS = [
 
 const ALL_BELTS = [...KIDS_BELTS, ...ADULT_BELTS];
 
+// IBJJF weight classes
+const WEIGHT_CLASSES = [
+  { value: 'rooster', label: 'Rooster', maleKg: '57.5', femaleKg: '48.5' },
+  { value: 'light-feather', label: 'Light Feather', maleKg: '64', femaleKg: '53.5' },
+  { value: 'feather', label: 'Feather', maleKg: '70', femaleKg: '58.5' },
+  { value: 'light', label: 'Light', maleKg: '76', femaleKg: '64' },
+  { value: 'middle', label: 'Middle', maleKg: '82.3', femaleKg: '69' },
+  { value: 'medium-heavy', label: 'Medium Heavy', maleKg: '88.3', femaleKg: '74' },
+  { value: 'heavy', label: 'Heavy', maleKg: '94.3', femaleKg: '79.3' },
+  { value: 'super-heavy', label: 'Super Heavy', maleKg: '100.5', femaleKg: '84.3' },
+  { value: 'ultra-heavy', label: 'Ultra Heavy', maleKg: '100.5+', femaleKg: '84.3+' },
+];
+
 function getBeltInfo(belt: string) {
   return ALL_BELTS.find(b => b.value === belt) || { value: belt, label: belt, color: 'bg-gray-400' };
 }
@@ -68,6 +82,7 @@ export default function ProfilePage() {
     name: '',
     isPublic: false,
     birthDate: '',
+    weight: '',
     country: '',
     city: '',
     gym: '',
@@ -100,6 +115,7 @@ export default function ProfilePage() {
         name: data.user.name,
         isPublic: data.user.isPublic,
         birthDate: data.user.birthDate ? data.user.birthDate.split('T')[0] : '',
+        weight: data.user.weight || '',
         country: data.user.country || '',
         city: data.user.city || '',
         gym: data.user.gym || '',
@@ -320,6 +336,26 @@ export default function ProfilePage() {
                     Age: {calculateAge(profileForm.birthDate)} years old
                   </p>
                 )}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Weight Class
+                </label>
+                <select
+                  value={profileForm.weight}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, weight: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                  <option value="">Select weight class...</option>
+                  {WEIGHT_CLASSES.map(w => (
+                    <option key={w.value} value={w.value}>
+                      {w.label} (≤{w.maleKg}kg / {w.femaleKg}kg)
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-gray-500 mt-1">
+                  IBJJF weight classes (Male / Female limits)
+                </p>
               </div>
             </div>
           </div>
