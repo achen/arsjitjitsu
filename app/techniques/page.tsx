@@ -166,8 +166,8 @@ export default function TechniquesPage() {
   const [savingCreatePosition, setSavingCreatePosition] = useState(false);
   const [createPositionError, setCreatePositionError] = useState<string | null>(null);
 
-  // Get unique positions from techniques for the edit dropdown
-  const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
+  // Get unique positions from database positions for dropdowns
+  const uniquePositions = positions.map(p => p.name).sort();
 
   // Scroll to newly created technique in reassign modal
   useEffect(() => {
