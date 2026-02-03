@@ -53,6 +53,7 @@ export async function getCurrentUser(): Promise<Omit<User, 'passwordHash'> | nul
       isAdmin: true,
       isPublic: true,
       birthDate: true,
+      weight: true,
       country: true,
       city: true,
       gym: true,
