@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, ExternalLink, Check, X, Play, Loader2 } from 'lucide-react';
+import { Search, Check, X, Play, Loader2, Plus, CheckCircle } from 'lucide-react';
 
 interface ScrapedVideo {
   id: number;
@@ -17,6 +17,7 @@ interface ScrapedVideo {
   giNogi: string[];
   positions: string[];
   techniqueTypes: string[];
+  isMapped?: boolean;
 }
 
 interface Technique {
@@ -34,17 +35,42 @@ interface Pagination {
   totalPages: number;
 }
 
+interface Stats {
+  total: number;
+  mapped: number;
+  unmapped: number;
+}
+
+const POSITIONS = [
+  'Mount Top', 'Mount Bottom', 'Side Control Top', 'Side Control Bottom',
+  'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
+  'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'Butterfly Half',
+  'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'Collar Sleeve Guard', 'X-Guard', 'Single Leg X',
+  '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground', 'K Guard',
+  'Rubber Guard', 'Worm Guard', 'Waiter Guard', 'Williams Guard', 'Standing',
+  'Turtle Top', 'Turtle Bottom', 'North-South Top', 'North-South Bottom',
+  'Knee on Belly Top', 'Knee on Belly Bottom', 'Crucifix', 'Truck',
+  'Ashi Garami', 'Outside Ashi', 'Saddle', 'Backside 50/50', 'False Reap', 'Sambo Knot',
+  'Kesa Gatame', 'Kuzure Kesa Gatame',
+];
+
+const TYPES = [
+  'Escape', 'Sweep', 'Reversal', 'Takedown', 'Submission', 'Pass', 'Transition', 'Setup', 'Defense', 'Variant', 'Entry'
+];
+
 export default function AdminVideosPage() {
   const [videos, setVideos] = useState<ScrapedVideo[]>([]);
   const [techniques, setTechniques] = useState<Technique[]>([]);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pagination, setPagination] = useState<Pagination | null>(null);
+  const [stats, setStats] = useState<Stats | null>(null);
   
   // Filters for videos
   const [videoSearch, setVideoSearch] = useState('');
   const [videoPosition, setVideoPosition] = useState('');
   const [videoInstructor, setVideoInstructor] = useState('');
+  const [mappedFilter, setMappedFilter] = useState<'unmapped' | 'all' | 'mapped'>('unmapped');
   const [availablePositions, setAvailablePositions] = useState<string[]>([]);
   const [availableInstructors, setAvailableInstructors] = useState<string[]>([]);
   
@@ -60,6 +86,17 @@ export default function AdminVideosPage() {
   const [mapping, setMapping] = useState(false);
   const [mapSuccess, setMapSuccess] = useState<string | null>(null);
   const [mapError, setMapError] = useState<string | null>(null);
+  
+  // New technique form
+  const [showNewTechniqueForm, setShowNewTechniqueForm] = useState(false);
+  const [newTechnique, setNewTechnique] = useState({
+    name: '',
+    position: '',
+    type: 'Submission',
+    description: '',
+    giType: 'both',
+  });
+  const [creatingTechnique, setCreatingTechnique] = useState(false);
 
   // Check auth and load data
   useEffect(() => {
@@ -89,6 +126,7 @@ export default function AdminVideosPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '50',
+        mapped: mappedFilter,
         ...(videoSearch && { search: videoSearch }),
         ...(videoPosition && { position: videoPosition }),
         ...(videoInstructor && { instructor: videoInstructor }),
@@ -101,6 +139,7 @@ export default function AdminVideosPage() {
         setPagination(data.pagination);
         setAvailablePositions(data.filters.positions);
         setAvailableInstructors(data.filters.instructors);
+        setStats(data.stats);
       }
     } catch (error) {
       console.error('Load videos error:', error);
@@ -122,6 +161,13 @@ export default function AdminVideosPage() {
   const handleVideoSearch = () => {
     loadVideos(1);
   };
+  
+  // Reload videos when mapped filter changes
+  useEffect(() => {
+    if (isAdmin) {
+      loadVideos(1);
+    }
+  }, [mappedFilter]);
 
   const mapVideoToTechnique = async (technique: Technique) => {
     if (!selectedVideo) return;
@@ -144,7 +190,15 @@ export default function AdminVideosPage() {
       });
 
       if (res.ok) {
-        setMapSuccess(`Mapped "${selectedVideo.title.substring(0, 40)}..." to "${technique.name}"`);
+        setMapSuccess(`Mapped to "${technique.name}"`);
+        // Mark video as mapped locally
+        setVideos(prev => prev.map(v => 
+          v.id === selectedVideo.id ? { ...v, isMapped: true } : v
+        ));
+        // Update stats
+        if (stats) {
+          setStats({ ...stats, mapped: stats.mapped + 1, unmapped: stats.unmapped - 1 });
+        }
         setTimeout(() => setMapSuccess(null), 3000);
       } else {
         const data = await res.json();
@@ -156,6 +210,77 @@ export default function AdminVideosPage() {
       setTimeout(() => setMapError(null), 3000);
     } finally {
       setMapping(false);
+    }
+  };
+
+  const createTechniqueAndMap = async () => {
+    if (!selectedVideo || !newTechnique.name || !newTechnique.position) {
+      setMapError('Please fill in technique name and position');
+      setTimeout(() => setMapError(null), 3000);
+      return;
+    }
+    
+    setCreatingTechnique(true);
+    setMapSuccess(null);
+    setMapError(null);
+
+    try {
+      // Create the technique
+      const createRes = await fetch('/api/admin/techniques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newTechnique),
+      });
+
+      if (!createRes.ok) {
+        const data = await createRes.json();
+        setMapError(data.error || 'Failed to create technique');
+        setTimeout(() => setMapError(null), 3000);
+        setCreatingTechnique(false);
+        return;
+      }
+
+      const { technique } = await createRes.json();
+
+      // Map the video to the new technique
+      const mapRes = await fetch('/api/admin/videos/map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          techniqueId: technique.id,
+          title: selectedVideo.title,
+          url: selectedVideo.youtubeUrl,
+          instructor: selectedVideo.instructor,
+          duration: selectedVideo.duration,
+        }),
+      });
+
+      if (mapRes.ok) {
+        setMapSuccess(`Created "${technique.name}" and mapped video!`);
+        // Add to techniques list
+        setTechniques(prev => [...prev, technique].sort((a, b) => a.name.localeCompare(b.name)));
+        // Mark video as mapped locally
+        setVideos(prev => prev.map(v => 
+          v.id === selectedVideo.id ? { ...v, isMapped: true } : v
+        ));
+        // Update stats
+        if (stats) {
+          setStats({ ...stats, mapped: stats.mapped + 1, unmapped: stats.unmapped - 1 });
+        }
+        // Reset form
+        setShowNewTechniqueForm(false);
+        setNewTechnique({ name: '', position: '', type: 'Submission', description: '', giType: 'both' });
+        setTimeout(() => setMapSuccess(null), 3000);
+      } else {
+        const data = await mapRes.json();
+        setMapError(`Created technique but failed to map: ${data.error}`);
+        setTimeout(() => setMapError(null), 5000);
+      }
+    } catch (error) {
+      setMapError('Network error');
+      setTimeout(() => setMapError(null), 3000);
+    } finally {
+      setCreatingTechnique(false);
     }
   };
 
@@ -200,9 +325,18 @@ export default function AdminVideosPage() {
       <Navigation />
       
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">
-          🎬 Admin: Video Mapping
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+          🎬 Video Mapping
         </h1>
+        
+        {/* Stats */}
+        {stats && (
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            {stats.total.toLocaleString()} total videos • 
+            <span className="text-green-600"> {stats.mapped.toLocaleString()} mapped</span> • 
+            <span className="text-orange-600"> {stats.unmapped.toLocaleString()} unmapped</span>
+          </p>
+        )}
 
         {/* Success/Error Messages */}
         {mapSuccess && (
@@ -222,11 +356,45 @@ export default function AdminVideosPage() {
           {/* Left Column: Videos */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
             <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Scraped Videos ({pagination?.total || 0})
+              Videos ({pagination?.total || 0})
             </h2>
 
             {/* Video Filters */}
             <div className="space-y-3 mb-4">
+              {/* Mapped filter toggle */}
+              <div className="flex gap-1 p-1 bg-gray-100 dark:bg-gray-700 rounded-lg">
+                <button
+                  onClick={() => setMappedFilter('unmapped')}
+                  className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    mappedFilter === 'unmapped'
+                      ? 'bg-white dark:bg-gray-600 shadow text-orange-600 font-medium'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Unmapped
+                </button>
+                <button
+                  onClick={() => setMappedFilter('all')}
+                  className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    mappedFilter === 'all'
+                      ? 'bg-white dark:bg-gray-600 shadow text-blue-600 font-medium'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setMappedFilter('mapped')}
+                  className={`flex-1 px-3 py-1.5 text-sm rounded-md transition-colors ${
+                    mappedFilter === 'mapped'
+                      ? 'bg-white dark:bg-gray-600 shadow text-green-600 font-medium'
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}
+                >
+                  Mapped
+                </button>
+              </div>
+              
               <div className="flex gap-2">
                 <input
                   type="text"
@@ -284,18 +452,27 @@ export default function AdminVideosPage() {
                   className={`p-3 rounded-lg cursor-pointer transition-colors ${
                     selectedVideo?.id === video.id
                       ? 'bg-blue-100 dark:bg-blue-900 border-2 border-blue-500'
-                      : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
+                      : video.isMapped
+                        ? 'bg-green-50 dark:bg-green-900/20 hover:bg-green-100 dark:hover:bg-green-900/30'
+                        : 'bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600'
                   }`}
                 >
                   <div className="flex gap-3">
-                    <img
-                      src={video.thumbnail}
-                      alt={video.title}
-                      className="w-24 h-16 object-cover rounded"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
-                      }}
-                    />
+                    <div className="relative">
+                      <img
+                        src={video.thumbnail}
+                        alt={video.title}
+                        className="w-24 h-16 object-cover rounded"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
+                        }}
+                      />
+                      {video.isMapped && (
+                        <div className="absolute -top-1 -right-1 bg-green-500 rounded-full p-0.5">
+                          <CheckCircle size={14} className="text-white" />
+                        </div>
+                      )}
+                    </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">
                         {video.title}
@@ -351,9 +528,24 @@ export default function AdminVideosPage() {
 
           {/* Right Column: Techniques */}
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
-            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
-              Techniques ({filteredTechniques.length})
-            </h2>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                Techniques ({filteredTechniques.length})
+              </h2>
+              {selectedVideo && (
+                <button
+                  onClick={() => setShowNewTechniqueForm(!showNewTechniqueForm)}
+                  className={`flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                    showNewTechniqueForm
+                      ? 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                      : 'bg-green-600 text-white hover:bg-green-700'
+                  }`}
+                >
+                  <Plus size={16} />
+                  {showNewTechniqueForm ? 'Cancel' : 'New Technique'}
+                </button>
+              )}
+            </div>
 
             {/* Selected Video Preview */}
             {selectedVideo && (
@@ -370,6 +562,85 @@ export default function AdminVideosPage() {
                       {t}
                     </span>
                   ))}
+                </div>
+              </div>
+            )}
+
+            {/* New Technique Form */}
+            {showNewTechniqueForm && selectedVideo && (
+              <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-700">
+                <h3 className="font-medium text-green-800 dark:text-green-200 mb-3">
+                  Create New Technique & Map Video
+                </h3>
+                <div className="space-y-3">
+                  <input
+                    type="text"
+                    placeholder="Technique Name *"
+                    value={newTechnique.name}
+                    onChange={(e) => setNewTechnique(prev => ({ ...prev, name: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  />
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={newTechnique.position}
+                      onChange={(e) => setNewTechnique(prev => ({ ...prev, position: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Position *</option>
+                      {POSITIONS.map(p => (
+                        <option key={p} value={p}>{p}</option>
+                      ))}
+                    </select>
+                    
+                    <select
+                      value={newTechnique.type}
+                      onChange={(e) => setNewTechnique(prev => ({ ...prev, type: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      {TYPES.map(t => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-2">
+                    <select
+                      value={newTechnique.giType}
+                      onChange={(e) => setNewTechnique(prev => ({ ...prev, giType: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="both">Both (Gi & No-Gi)</option>
+                      <option value="gi">Gi Only</option>
+                      <option value="nogi">No-Gi Only</option>
+                    </select>
+                    
+                    <input
+                      type="text"
+                      placeholder="Description (optional)"
+                      value={newTechnique.description}
+                      onChange={(e) => setNewTechnique(prev => ({ ...prev, description: e.target.value }))}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                  
+                  <button
+                    onClick={createTechniqueAndMap}
+                    disabled={creatingTechnique || !newTechnique.name || !newTechnique.position}
+                    className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  >
+                    {creatingTechnique ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      <>
+                        <Plus size={18} />
+                        Create & Map
+                      </>
+                    )}
+                  </button>
                 </div>
               </div>
             )}
@@ -410,14 +681,14 @@ export default function AdminVideosPage() {
             </div>
 
             {/* Technique List */}
-            <div className="space-y-1 max-h-[500px] overflow-y-auto">
+            <div className="space-y-1 max-h-[400px] overflow-y-auto">
               {!selectedVideo ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-8">
                   Select a video from the left to map it to a technique
                 </p>
               ) : filteredTechniques.length === 0 ? (
                 <p className="text-center text-gray-500 dark:text-gray-400 py-8">
-                  No techniques match your filters
+                  No techniques match your filters. Try creating a new one!
                 </p>
               ) : (
                 filteredTechniques.map(technique => (
