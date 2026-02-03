@@ -38,6 +38,14 @@ interface User {
   isAdmin?: boolean;
 }
 
+interface Position {
+  id: string;
+  name: string;
+  description: string | null;
+  alternateNames: string[];
+  sortOrder: number;
+}
+
 const POSITIONS = [
   'Mount Top', 'Mount Bottom', 'Side Control Top', 'Side Control Bottom',
   'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
@@ -72,6 +80,7 @@ const GI_OPTIONS = [
 
 export default function TechniquesPage() {
   const [techniques, setTechniques] = useState<Technique[]>([]);
+  const [positions, setPositions] = useState<Position[]>([]);
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [selectedPosition, setSelectedPosition] = useState('');
@@ -145,6 +154,18 @@ export default function TechniquesPage() {
   const [reassignCreateError, setReassignCreateError] = useState<string | null>(null);
   const [scrollToTechniqueId, setScrollToTechniqueId] = useState<string | null>(null);
 
+  // Admin position edit state
+  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
+  const [positionEditForm, setPositionEditForm] = useState({ name: '', description: '', alternateNames: '' });
+  const [savingPositionEdit, setSavingPositionEdit] = useState(false);
+  const [positionEditError, setPositionEditError] = useState<string | null>(null);
+  
+  // Admin create position state
+  const [showCreatePosition, setShowCreatePosition] = useState(false);
+  const [createPositionForm, setCreatePositionForm] = useState({ name: '', description: '', alternateNames: '' });
+  const [savingCreatePosition, setSavingCreatePosition] = useState(false);
+  const [createPositionError, setCreatePositionError] = useState<string | null>(null);
+
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
 
@@ -217,6 +238,7 @@ export default function TechniquesPage() {
   useEffect(() => {
     checkAuth();
     fetchBookmarks();
+    fetchPositions();
   }, []);
 
   const fetchBookmarks = async () => {
@@ -440,6 +462,159 @@ export default function TechniquesPage() {
       }
     } catch (error) {
       console.error('Auth check error:', error);
+    }
+  };
+
+  const fetchPositions = async () => {
+    try {
+      const res = await fetch('/api/admin/positions');
+      if (res.ok) {
+        const data = await res.json();
+        setPositions(data.positions || []);
+      }
+    } catch (error) {
+      console.error('Fetch positions error:', error);
+    }
+  };
+
+  // Position edit functions
+  const openPositionEditModal = (positionName: string) => {
+    const pos = positions.find(p => p.name === positionName);
+    if (pos) {
+      setEditingPosition(pos);
+      setPositionEditForm({
+        name: pos.name,
+        description: pos.description || '',
+        alternateNames: pos.alternateNames.join(', '),
+      });
+      setPositionEditError(null);
+    }
+  };
+
+  const closePositionEditModal = () => {
+    setEditingPosition(null);
+    setPositionEditForm({ name: '', description: '', alternateNames: '' });
+    setPositionEditError(null);
+  };
+
+  const savePositionEdit = async () => {
+    if (!editingPosition) return;
+    
+    setSavingPositionEdit(true);
+    setPositionEditError(null);
+    
+    try {
+      const alternateNamesArray = positionEditForm.alternateNames
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      const res = await fetch('/api/admin/positions', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: editingPosition.id,
+          name: positionEditForm.name,
+          description: positionEditForm.description,
+          alternateNames: alternateNamesArray,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update positions list
+        setPositions(prev => prev.map(p => 
+          p.id === data.position.id ? data.position : p
+        ));
+        // If name changed, update techniques
+        if (data.oldName !== data.newName) {
+          setTechniques(prev => prev.map(t => 
+            t.position === data.oldName ? { ...t, position: data.newName } : t
+          ));
+        }
+        closePositionEditModal();
+      } else {
+        const data = await res.json();
+        setPositionEditError(data.error || 'Failed to save');
+      }
+    } catch (error) {
+      setPositionEditError('Network error');
+    } finally {
+      setSavingPositionEdit(false);
+    }
+  };
+
+  const deletePosition = async () => {
+    if (!editingPosition) return;
+    if (!confirm(`Are you sure you want to delete "${editingPosition.name}"? This will only work if no techniques use this position.`)) return;
+    
+    setSavingPositionEdit(true);
+    try {
+      const res = await fetch(`/api/admin/positions?id=${editingPosition.id}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        setPositions(prev => prev.filter(p => p.id !== editingPosition.id));
+        closePositionEditModal();
+      } else {
+        const data = await res.json();
+        setPositionEditError(data.error || 'Failed to delete');
+      }
+    } catch (error) {
+      setPositionEditError('Network error');
+    } finally {
+      setSavingPositionEdit(false);
+    }
+  };
+
+  // Create position functions
+  const openCreatePositionModal = () => {
+    setShowCreatePosition(true);
+    setCreatePositionForm({ name: '', description: '', alternateNames: '' });
+    setCreatePositionError(null);
+  };
+
+  const closeCreatePositionModal = () => {
+    setShowCreatePosition(false);
+    setCreatePositionForm({ name: '', description: '', alternateNames: '' });
+    setCreatePositionError(null);
+  };
+
+  const saveCreatePosition = async () => {
+    setSavingCreatePosition(true);
+    setCreatePositionError(null);
+    
+    try {
+      const alternateNamesArray = createPositionForm.alternateNames
+        .split(',')
+        .map(s => s.trim())
+        .filter(s => s.length > 0);
+
+      const res = await fetch('/api/admin/positions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createPositionForm.name,
+          description: createPositionForm.description,
+          alternateNames: alternateNamesArray,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        setPositions(prev => [...prev, data.position]);
+        closeCreatePositionModal();
+        // Refresh positions list to ensure proper sort order
+        fetchPositions();
+      } else {
+        const data = await res.json();
+        setCreatePositionError(data.error || 'Failed to create');
+      }
+    } catch (error) {
+      setCreatePositionError('Network error');
+    } finally {
+      setSavingCreatePosition(false);
     }
   };
 
@@ -967,13 +1142,29 @@ export default function TechniquesPage() {
     ? workingOnTechniques
     : giFilteredTechniques;
 
-  const groupedTechniques = filteredTechniques.reduce((acc, technique) => {
-    if (!acc[technique.position]) {
-      acc[technique.position] = [];
+  // Group techniques by position, including empty positions from the database
+  const groupedTechniques = (() => {
+    // Start with techniques grouped by position
+    const grouped = filteredTechniques.reduce((acc, technique) => {
+      if (!acc[technique.position]) {
+        acc[technique.position] = [];
+      }
+      acc[technique.position].push(technique);
+      return acc;
+    }, {} as Record<string, Technique[]>);
+    
+    // Add empty positions from the database only when no filters are applied
+    const noFiltersApplied = !selectedPosition && !selectedType && !searchQuery && !showWorkingOnOnly && giFilter === 'all';
+    if (noFiltersApplied) {
+      positions.forEach(pos => {
+        if (!grouped[pos.name]) {
+          grouped[pos.name] = [];
+        }
+      });
     }
-    acc[technique.position].push(technique);
-    return acc;
-  }, {} as Record<string, Technique[]>);
+    
+    return grouped;
+  })();
 
   return (
     <div className="min-h-screen">
@@ -1020,7 +1211,7 @@ export default function TechniquesPage() {
                     className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                   >
                     <option value="">All Positions</option>
-                    {POSITIONS.map(pos => (
+                    {(positions.length > 0 ? positions.map(p => p.name) : POSITIONS).map(pos => (
                       <option key={pos} value={pos}>{pos}</option>
                     ))}
                   </select>
@@ -1158,6 +1349,16 @@ export default function TechniquesPage() {
               
               {/* Expand/Collapse buttons */}
               <div className="flex items-center gap-2">
+                {user?.isAdmin && (
+                  <button
+                    onClick={openCreatePositionModal}
+                    className="flex items-center gap-1 text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300"
+                  >
+                    <Plus size={16} />
+                    Add Position
+                  </button>
+                )}
+                {user?.isAdmin && <span className="text-gray-400">|</span>}
                 <button
                   onClick={expandAll}
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white"
@@ -1174,11 +1375,14 @@ export default function TechniquesPage() {
               </div>
             </div>
 
-            {Object.entries(groupedTechniques).map(([position, techs]) => {
+            {Object.entries(groupedTechniques)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([position, techs]) => {
               const allInPositionSelected = techs.every(t => selectedTechniques.has(t.id));
               const someInPositionSelected = techs.some(t => selectedTechniques.has(t.id));
               const isCollapsed = collapsedGroups.has(position);
               const workingOnCount = techs.filter(t => t.workingOn).length;
+              const positionData = positions.find(p => p.name === position);
               
               return (
               <div key={position} className="bg-white dark:bg-gray-800 rounded-xl shadow overflow-hidden">
@@ -1200,25 +1404,52 @@ export default function TechniquesPage() {
                       )}
                     </div>
                   )}
-                  <div className="flex-1 flex items-center gap-2">
-                    <h2 className="text-lg font-semibold text-gray-900 dark:text-white text-left">
-                      {position} <span className="text-gray-500">({techs.length})</span>
-                    </h2>
-                    {workingOnCount > 0 && (
-                      <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full">
-                        <Star size={12} className="fill-yellow-500" />
-                        {workingOnCount}
-                      </span>
+                  <div className="flex-1 flex flex-col items-start gap-1">
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold text-gray-900 dark:text-white text-left">
+                        {position} <span className="text-gray-500">({techs.length})</span>
+                      </h2>
+                      {workingOnCount > 0 && (
+                        <span className="flex items-center gap-1 text-xs bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 px-2 py-0.5 rounded-full">
+                          <Star size={12} className="fill-yellow-500" />
+                          {workingOnCount}
+                        </span>
+                      )}
+                      {user?.isAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openPositionEditModal(position); }}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200 hover:bg-blue-200 dark:hover:bg-blue-800"
+                          title={`Edit ${position}`}
+                        >
+                          <Edit2 size={12} />
+                          Edit
+                        </button>
+                      )}
+                      {user?.isAdmin && (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); openCreateModal(position); }}
+                          className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800"
+                          title={`Add technique to ${position}`}
+                        >
+                          <Plus size={12} />
+                          Add
+                        </button>
+                      )}
+                    </div>
+                    {positionData?.description && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 text-left">
+                        {positionData.description}
+                        {positionData.alternateNames.length > 0 && (
+                          <span className="ml-2 text-gray-400">
+                            (Also: {positionData.alternateNames.join(', ')})
+                          </span>
+                        )}
+                      </p>
                     )}
-                    {user?.isAdmin && (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); openCreateModal(position); }}
-                        className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800"
-                        title={`Add technique to ${position}`}
-                      >
-                        <Plus size={12} />
-                        Add
-                      </button>
+                    {positionData && positionData.alternateNames.length > 0 && !positionData.description && (
+                      <p className="text-xs text-gray-400 dark:text-gray-500 text-left">
+                        Also known as: {positionData.alternateNames.join(', ')}
+                      </p>
                     )}
                   </div>
                   {isCollapsed ? <ChevronDown size={20} className="text-gray-500" /> : <ChevronUp size={20} className="text-gray-500" />}
@@ -2027,6 +2258,199 @@ export default function TechniquesPage() {
                     <ArrowRight size={16} />
                     Move Video
                   </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Position Edit Modal */}
+      {editingPosition && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Edit Position
+              </h3>
+              <button
+                onClick={closePositionEditModal}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {positionEditError && (
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                  {positionEditError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Position Name *
+                </label>
+                <input
+                  type="text"
+                  value={positionEditForm.name}
+                  onChange={(e) => setPositionEditForm({ ...positionEditForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="e.g., Closed Guard Bottom"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={positionEditForm.description}
+                  onChange={(e) => setPositionEditForm({ ...positionEditForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Brief description of this position..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Alternate Names
+                </label>
+                <input
+                  type="text"
+                  value={positionEditForm.alternateNames}
+                  onChange={(e) => setPositionEditForm({ ...positionEditForm, alternateNames: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Comma-separated, e.g., Full Guard, Guarda Fechada"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Helps users find this position when searching
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-between">
+              <button
+                onClick={deletePosition}
+                disabled={savingPositionEdit}
+                className="px-4 py-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-colors"
+              >
+                Delete Position
+              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={closePositionEditModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={savePositionEdit}
+                  disabled={savingPositionEdit || !positionEditForm.name.trim()}
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {savingPositionEdit ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Position Modal */}
+      {showCreatePosition && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full">
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                Create New Position
+              </h3>
+              <button
+                onClick={closeCreatePositionModal}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            
+            <div className="p-4 space-y-4">
+              {createPositionError && (
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded-lg text-sm">
+                  {createPositionError}
+                </div>
+              )}
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Position Name *
+                </label>
+                <input
+                  type="text"
+                  value={createPositionForm.name}
+                  onChange={(e) => setCreatePositionForm({ ...createPositionForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="e.g., Closed Guard Bottom"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Description
+                </label>
+                <textarea
+                  value={createPositionForm.description}
+                  onChange={(e) => setCreatePositionForm({ ...createPositionForm, description: e.target.value })}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Brief description of this position..."
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Alternate Names
+                </label>
+                <input
+                  type="text"
+                  value={createPositionForm.alternateNames}
+                  onChange={(e) => setCreatePositionForm({ ...createPositionForm, alternateNames: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  placeholder="Comma-separated, e.g., Full Guard, Guarda Fechada"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Helps users find this position when searching
+                </p>
+              </div>
+            </div>
+            
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={closeCreatePositionModal}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={saveCreatePosition}
+                disabled={savingCreatePosition || !createPositionForm.name.trim()}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {savingCreatePosition ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  'Create Position'
                 )}
               </button>
             </div>
