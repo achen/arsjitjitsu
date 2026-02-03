@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
         belt: true,
         isPublic: true,
         birthDate: true,
+        weight: true,
         country: true,
         city: true,
         gym: true,
@@ -61,13 +62,14 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, isPublic, birthDate, country, city, gym } = body;
+    const { name, isPublic, birthDate, weight, country, city, gym } = body;
 
     // Build update data (belt is not directly editable - it's derived from belt history)
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (birthDate !== undefined) updateData.birthDate = birthDate ? new Date(birthDate) : null;
+    if (weight !== undefined) updateData.weight = weight || null;
     if (country !== undefined) updateData.country = country || null;
     if (city !== undefined) updateData.city = city || null;
     if (gym !== undefined) updateData.gym = gym || null;
@@ -82,6 +84,7 @@ export async function PUT(request: NextRequest) {
         belt: true,
         isPublic: true,
         birthDate: true,
+        weight: true,
         country: true,
         city: true,
         gym: true,
