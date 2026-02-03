@@ -1105,6 +1105,10 @@ export default function TechniquesPage() {
                             {technique.videos && technique.videos.length > 0 && (
                               <button
                                 onClick={() => {
+                                  if (!user) {
+                                    window.location.href = '/auth/login';
+                                    return;
+                                  }
                                   const newExpanded = new Set(expandedVideos);
                                   if (newExpanded.has(technique.id)) {
                                     newExpanded.delete(technique.id);
