@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2, Link2, Loader2, Copy } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2, Link2, Loader2, Copy, ArrowRight } from 'lucide-react';
 
 interface TechniqueVideo {
   id: string;
@@ -131,6 +131,12 @@ export default function TechniquesPage() {
   const [fetchingVideoMeta, setFetchingVideoMeta] = useState(false);
   const [savingVideo, setSavingVideo] = useState(false);
   const [addVideoError, setAddVideoError] = useState<string | null>(null);
+  
+  // Admin reassign video state
+  const [reassigningVideo, setReassigningVideo] = useState<{ videoId: string; currentTechniqueId: string; title: string } | null>(null);
+  const [reassignTechniqueId, setReassignTechniqueId] = useState('');
+  const [reassignSearch, setReassignSearch] = useState('');
+  const [savingReassign, setSavingReassign] = useState(false);
 
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
@@ -675,6 +681,69 @@ export default function TechniquesPage() {
       setDeletingVideo(null);
     }
   };
+
+  const openReassignModal = (videoId: string, currentTechniqueId: string, videoTitle: string) => {
+    setReassigningVideo({ videoId, currentTechniqueId, title: videoTitle });
+    setReassignTechniqueId('');
+    setReassignSearch('');
+  };
+
+  const closeReassignModal = () => {
+    setReassigningVideo(null);
+    setReassignTechniqueId('');
+    setReassignSearch('');
+  };
+
+  const reassignVideo = async () => {
+    if (!reassigningVideo || !reassignTechniqueId) return;
+    
+    setSavingReassign(true);
+    try {
+      const res = await fetch('/api/admin/videos/map', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          videoId: reassigningVideo.videoId,
+          newTechniqueId: reassignTechniqueId,
+        }),
+      });
+
+      if (res.ok) {
+        // Remove video from old technique and add to new one
+        const video = techniques
+          .find(t => t.id === reassigningVideo.currentTechniqueId)
+          ?.videos.find(v => v.id === reassigningVideo.videoId);
+        
+        if (video) {
+          setTechniques(prev => prev.map(t => {
+            if (t.id === reassigningVideo.currentTechniqueId) {
+              return { ...t, videos: t.videos.filter(v => v.id !== reassigningVideo.videoId) };
+            }
+            if (t.id === reassignTechniqueId) {
+              return { ...t, videos: [...t.videos, video] };
+            }
+            return t;
+          }));
+        }
+        closeReassignModal();
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to reassign video');
+      }
+    } catch (error) {
+      alert('Network error');
+    } finally {
+      setSavingReassign(false);
+    }
+  };
+
+  // Filter techniques for reassign modal
+  const filteredTechniquesForReassign = techniques.filter(t => {
+    if (t.id === reassigningVideo?.currentTechniqueId) return false;
+    if (!reassignSearch) return true;
+    const search = reassignSearch.toLowerCase();
+    return t.name.toLowerCase().includes(search) || t.position.toLowerCase().includes(search);
+  });
 
   // Extract YouTube video ID from URL
   const extractYouTubeId = (url: string): string | null => {
@@ -1261,17 +1330,29 @@ export default function TechniquesPage() {
                                     <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
                                   </a>
                                   {user?.isAdmin && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        deleteVideo(technique.id, video.id);
-                                      }}
-                                      disabled={deletingVideo === video.id}
-                                      className="flex-shrink-0 p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
-                                      title="Remove video from technique"
-                                    >
-                                      <Trash2 size={14} className={deletingVideo === video.id ? 'opacity-50' : ''} />
-                                    </button>
+                                    <>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          openReassignModal(video.id, technique.id, video.title);
+                                        }}
+                                        className="flex-shrink-0 p-1 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                                        title="Move to different technique"
+                                      >
+                                        <ArrowRight size={14} />
+                                      </button>
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          deleteVideo(technique.id, video.id);
+                                        }}
+                                        disabled={deletingVideo === video.id}
+                                        className="flex-shrink-0 p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                        title="Remove video from technique"
+                                      >
+                                        <Trash2 size={14} className={deletingVideo === video.id ? 'opacity-50' : ''} />
+                                      </button>
+                                    </>
                                   )}
                                 </div>
                                   );
@@ -1689,6 +1770,95 @@ export default function TechniquesPage() {
                   )}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reassign Video Modal */}
+      {reassigningVideo && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Move Video to Different Technique
+                </h2>
+                <button
+                  onClick={closeReassignModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+              <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                {reassigningVideo.title}
+              </p>
+            </div>
+
+            <div className="p-4 border-b border-gray-200 dark:border-gray-700">
+              <input
+                type="text"
+                value={reassignSearch}
+                onChange={(e) => setReassignSearch(e.target.value)}
+                placeholder="Search techniques..."
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-4 space-y-1 max-h-[50vh]">
+              {filteredTechniquesForReassign.slice(0, 100).map(t => (
+                <button
+                  key={t.id}
+                  onClick={() => setReassignTechniqueId(t.id)}
+                  className={`w-full text-left px-3 py-2 rounded-lg transition-colors ${
+                    reassignTechniqueId === t.id
+                      ? 'bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200'
+                      : 'hover:bg-gray-100 dark:hover:bg-gray-700'
+                  }`}
+                >
+                  <p className="font-medium text-gray-900 dark:text-white">{t.name}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {t.position} • {t.type}
+                  </p>
+                </button>
+              ))}
+              {filteredTechniquesForReassign.length > 100 && (
+                <p className="text-xs text-gray-500 dark:text-gray-400 text-center py-2">
+                  Showing first 100 results. Refine your search for more specific results.
+                </p>
+              )}
+              {filteredTechniquesForReassign.length === 0 && (
+                <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                  No matching techniques found
+                </p>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-200 dark:border-gray-700 flex justify-end gap-3">
+              <button
+                onClick={closeReassignModal}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={reassignVideo}
+                disabled={savingReassign || !reassignTechniqueId}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+              >
+                {savingReassign ? (
+                  <>
+                    <Loader2 size={16} className="animate-spin" />
+                    Moving...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight size={16} />
+                    Move Video
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

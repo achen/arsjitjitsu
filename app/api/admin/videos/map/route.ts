@@ -99,3 +99,49 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+
+export async function PUT(request: NextRequest) {
+  // Check admin
+  const user = await getCurrentUser();
+  if (!user || !user.isAdmin) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+  }
+
+  try {
+    const body = await request.json();
+    const { videoId, newTechniqueId } = body;
+
+    if (!videoId || !newTechniqueId) {
+      return NextResponse.json(
+        { error: 'Missing required fields: videoId, newTechniqueId' },
+        { status: 400 }
+      );
+    }
+
+    // Check if new technique exists
+    const newTechnique = await prisma.technique.findUnique({
+      where: { id: newTechniqueId },
+    });
+
+    if (!newTechnique) {
+      return NextResponse.json(
+        { error: 'Technique not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update the video's technique mapping
+    const video = await prisma.techniqueVideo.update({
+      where: { id: videoId },
+      data: { techniqueId: newTechniqueId },
+    });
+
+    return NextResponse.json({ video, technique: newTechnique });
+  } catch (error) {
+    console.error('Update video mapping error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
