@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
         position,
         type,
         description: description || null,
-        giType: giType || 'both',
+        giType: giType || 'nogi',
       },
     });
 
@@ -86,7 +86,7 @@ export async function PUT(request: NextRequest) {
         position,
         type,
         description: description || null,
-        giType: giType || 'both',
+        giType: giType || 'nogi',
       },
     });
 

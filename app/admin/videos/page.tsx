@@ -700,8 +700,7 @@ export default function AdminVideosPage() {
                           {technique.name}
                         </p>
                         <p className="text-xs text-gray-500 dark:text-gray-400">
-                          {technique.position} • {technique.type}
-                          {technique.giType !== 'both' && ` • ${technique.giType}`}
+                          {technique.position} • {technique.type} • {technique.giType}
                         </p>
                       </div>
                       <Check size={18} className="text-green-600 opacity-0 group-hover:opacity-100" />

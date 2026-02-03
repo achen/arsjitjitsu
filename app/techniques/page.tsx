@@ -108,13 +108,13 @@ export default function TechniquesPage() {
   
   // Admin edit state
   const [editingTechnique, setEditingTechnique] = useState<Technique | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', position: '', type: '', description: '', giType: 'both' });
+  const [editForm, setEditForm] = useState({ name: '', position: '', type: '', description: '', giType: 'nogi' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   
   // Admin create state
   const [creatingForPosition, setCreatingForPosition] = useState<string | null>(null);
-  const [createForm, setCreateForm] = useState({ name: '', type: 'Submission', description: '', giType: 'both' });
+  const [createForm, setCreateForm] = useState({ name: '', type: 'Submission', description: '', giType: 'nogi' });
   const [savingCreate, setSavingCreate] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
 
@@ -243,7 +243,7 @@ export default function TechniquesPage() {
 
   const closeEditModal = () => {
     setEditingTechnique(null);
-    setEditForm({ name: '', position: '', type: '', description: '', giType: 'both' });
+    setEditForm({ name: '', position: '', type: '', description: '', giType: 'nogi' });
     setEditError(null);
   };
 
@@ -308,13 +308,13 @@ export default function TechniquesPage() {
 
   const openCreateModal = (position: string) => {
     setCreatingForPosition(position);
-    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'both' });
+    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'nogi' });
     setCreateError(null);
   };
 
   const closeCreateModal = () => {
     setCreatingForPosition(null);
-    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'both' });
+    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'nogi' });
     setCreateError(null);
   };
 
@@ -616,8 +616,8 @@ export default function TechniquesPage() {
   // Apply gi filter
   const giFilteredTechniques = techniques.filter(t => {
     if (giFilter === 'all') return true;
-    if (giFilter === 'gi') return t.giType === 'gi' || t.giType === 'both';
-    if (giFilter === 'nogi') return t.giType === 'nogi' || t.giType === 'both';
+    if (giFilter === 'gi') return t.giType === 'gi';
+    if (giFilter === 'nogi') return t.giType === 'nogi';
     return true;
   });
   
@@ -1209,9 +1209,8 @@ export default function TechniquesPage() {
                     onChange={(e) => setEditForm(prev => ({ ...prev, giType: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="both">Both (Gi & No-Gi)</option>
-                    <option value="gi">Gi Only</option>
-                    <option value="nogi">No-Gi Only</option>
+                    <option value="gi">Gi</option>
+                    <option value="nogi">No-Gi</option>
                   </select>
                 </div>
 
@@ -1319,9 +1318,8 @@ export default function TechniquesPage() {
                     onChange={(e) => setCreateForm(prev => ({ ...prev, giType: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    <option value="both">Both (Gi & No-Gi)</option>
-                    <option value="gi">Gi Only</option>
-                    <option value="nogi">No-Gi Only</option>
+                    <option value="gi">Gi</option>
+                    <option value="nogi">No-Gi</option>
                   </select>
                 </div>
 
