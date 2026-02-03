@@ -397,18 +397,44 @@ async function seed() {
   // Clear existing techniques
   await prisma.technique.deleteMany();
 
+  // Expand 'both' techniques into separate gi and nogi entries
+  const expandedTechniques: { name: string; position: string; type: string; description: string | null; giType: string }[] = [];
+  
+  for (const tech of techniques) {
+    if (tech.gi_type === 'both') {
+      // Create two entries - one for gi and one for nogi
+      expandedTechniques.push({
+        name: tech.name,
+        position: tech.position,
+        type: tech.type,
+        description: tech.description || null,
+        giType: 'gi',
+      });
+      expandedTechniques.push({
+        name: tech.name,
+        position: tech.position,
+        type: tech.type,
+        description: tech.description || null,
+        giType: 'nogi',
+      });
+    } else {
+      // Keep gi-only or nogi-only techniques as is
+      expandedTechniques.push({
+        name: tech.name,
+        position: tech.position,
+        type: tech.type,
+        description: tech.description || null,
+        giType: tech.gi_type,
+      });
+    }
+  }
+
   // Insert techniques
   await prisma.technique.createMany({
-    data: techniques.map((tech) => ({
-      name: tech.name,
-      position: tech.position,
-      type: tech.type,
-      description: tech.description || null,
-      giType: tech.gi_type,
-    })),
+    data: expandedTechniques,
   });
 
-  console.log(`✅ Seeded ${techniques.length} techniques`);
+  console.log(`✅ Seeded ${expandedTechniques.length} techniques (expanded from ${techniques.length} base techniques)`);
 
   // Show technique count by position
   const positionCounts = await prisma.technique.groupBy({

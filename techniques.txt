@@ -1,0 +1,555 @@
+Position	Technique	Gi/No-Gi
+50/50	Back Step Escape	gi
+50/50	Back Step Escape	nogi
+50/50	Calf Slicer	gi
+50/50	Calf Slicer	nogi
+50/50	Heel Hook	gi
+50/50	Heel Hook	nogi
+50/50	Kneebar	gi
+50/50	Kneebar	nogi
+50/50	Sweep	gi
+50/50	Sweep	nogi
+50/50	Toe Hold	gi
+50/50	Toe Hold	nogi
+Back Control	Arm Trap	gi
+Back Control	Arm Trap	nogi
+Back Control	Armbar from Back	gi
+Back Control	Armbar from Back	nogi
+Back Control	Body Triangle	gi
+Back Control	Body Triangle	nogi
+Back Control	Bow and Arrow Choke	gi
+Back Control	Collar Choke	gi
+Back Control	Maintaining Back Control	gi
+Back Control	Maintaining Back Control	nogi
+Back Control	Rear Naked Choke	gi
+Back Control	Rear Naked Choke	nogi
+Back Control	Seatbelt Control	gi
+Back Control	Seatbelt Control	nogi
+Back Control	Short Choke	gi
+Back Control	Short Choke	nogi
+Back Defense	Back to Wall	gi
+Back Defense	Back to Wall	nogi
+Back Defense	Hand Fighting	gi
+Back Defense	Hand Fighting	nogi
+Back Defense	Heel Pry	gi
+Back Defense	Heel Pry	nogi
+Back Defense	Hip Escape to Guard	gi
+Back Defense	Hip Escape to Guard	nogi
+Back Defense	Shoulder Walk Escape	gi
+Back Defense	Shoulder Walk Escape	nogi
+Butterfly Guard	Arm Drag	gi
+Butterfly Guard	Arm Drag	nogi
+Butterfly Guard	Butterfly Sweep	gi
+Butterfly Guard	Butterfly Sweep	nogi
+Butterfly Guard	Guillotine	gi
+Butterfly Guard	Guillotine	nogi
+Butterfly Guard	Hook Sweep	gi
+Butterfly Guard	Hook Sweep	nogi
+Butterfly Guard	Single Leg X Entry	gi
+Butterfly Guard	Single Leg X Entry	nogi
+Butterfly Guard	Snap Down	gi
+Butterfly Guard	Snap Down	nogi
+Butterfly Guard	Sumi Gaeshi	gi
+Butterfly Guard	X-Guard Entry	gi
+Butterfly Guard	X-Guard Entry	nogi
+Butterfly Half	Arm Drag	gi
+Butterfly Half	Arm Drag	nogi
+Butterfly Half	Back Take	gi
+Butterfly Half	Back Take	nogi
+Butterfly Half	Butterfly Half Sweep	gi
+Butterfly Half	Butterfly Half Sweep	nogi
+Butterfly Half	Dogfight	gi
+Butterfly Half	Dogfight	nogi
+Butterfly Half	Elevator Sweep	gi
+Butterfly Half	Elevator Sweep	nogi
+Butterfly Half	Guillotine	gi
+Butterfly Half	Guillotine	nogi
+Butterfly Half	Kimura	gi
+Butterfly Half	Kimura	nogi
+Butterfly Half	Single Leg X Entry	gi
+Butterfly Half	Single Leg X Entry	nogi
+Butterfly Half	Underhook Sweep	gi
+Butterfly Half	Underhook Sweep	nogi
+Butterfly Half	X-Guard Entry	gi
+Butterfly Half	X-Guard Entry	nogi
+Closed Guard Bottom	Armbar	gi
+Closed Guard Bottom	Armbar	nogi
+Closed Guard Bottom	Back Take from Guard	gi
+Closed Guard Bottom	Back Take from Guard	nogi
+Closed Guard Bottom	Cross Collar Choke	gi
+Closed Guard Bottom	Elevator Sweep	gi
+Closed Guard Bottom	Elevator Sweep	nogi
+Closed Guard Bottom	Flower Sweep	gi
+Closed Guard Bottom	Flower Sweep	nogi
+Closed Guard Bottom	Guillotine	gi
+Closed Guard Bottom	Guillotine	nogi
+Closed Guard Bottom	Hip Bump Sweep	gi
+Closed Guard Bottom	Hip Bump Sweep	nogi
+Closed Guard Bottom	Kimura	gi
+Closed Guard Bottom	Kimura	nogi
+Closed Guard Bottom	Lumberjack Sweep	gi
+Closed Guard Bottom	Omoplata	gi
+Closed Guard Bottom	Omoplata	nogi
+Closed Guard Bottom	Scissor Sweep	gi
+Closed Guard Bottom	Triangle Choke	gi
+Closed Guard Bottom	Triangle Choke	nogi
+Closed Guard Top	Can Opener	gi
+Closed Guard Top	Can Opener	nogi
+Closed Guard Top	Double Underhook Pass	gi
+Closed Guard Top	Double Underhook Pass	nogi
+Closed Guard Top	Guard Break - Kneeling	gi
+Closed Guard Top	Guard Break - Kneeling	nogi
+Closed Guard Top	Guard Break - Standing	gi
+Closed Guard Top	Guard Break - Standing	nogi
+Closed Guard Top	Log Splitter	gi
+Closed Guard Top	Log Splitter	nogi
+Closed Guard Top	Posture in Guard	gi
+Closed Guard Top	Posture in Guard	nogi
+Collar Sleeve Guard	Armbar	gi
+Collar Sleeve Guard	Back Take	gi
+Collar Sleeve Guard	Collar Drag	gi
+Collar Sleeve Guard	Collar Sleeve Retention	gi
+Collar Sleeve Guard	De La Riva Transition	gi
+Collar Sleeve Guard	Foot on Bicep Control	gi
+Collar Sleeve Guard	Foot on Hip Control	gi
+Collar Sleeve Guard	Hip Bump Sweep	gi
+Collar Sleeve Guard	Lasso Transition	gi
+Collar Sleeve Guard	Loop Choke	gi
+Collar Sleeve Guard	Omoplata	gi
+Collar Sleeve Guard	Overhead Sweep	gi
+Collar Sleeve Guard	Scissor Sweep	gi
+Collar Sleeve Guard	Sickle Sweep	gi
+Collar Sleeve Guard	Spider Transition	gi
+Collar Sleeve Guard	Tomoe Nage	gi
+Collar Sleeve Guard	Triangle Choke	gi
+Crucifix	Armbar	gi
+Crucifix	Armbar	nogi
+Crucifix	Collar Choke	gi
+Crucifix	Maintaining Crucifix	gi
+Crucifix	Maintaining Crucifix	nogi
+Crucifix	Neck Crank	gi
+Crucifix	Neck Crank	nogi
+Crucifix	Rear Naked Choke	gi
+Crucifix	Rear Naked Choke	nogi
+De La Riva Guard	Ankle Pick Sweep	gi
+De La Riva Guard	Ankle Pick Sweep	nogi
+De La Riva Guard	Back Take	gi
+De La Riva Guard	Berimbolo	gi
+De La Riva Guard	Collar Drag	gi
+De La Riva Guard	DLR Sweep	gi
+De La Riva Guard	Deep DLR	gi
+De La Riva Guard	Deep DLR	nogi
+De La Riva Guard	Kiss of the Dragon	gi
+De La Riva Guard	Kiss of the Dragon	nogi
+De La Riva Guard	X-Guard Entry	gi
+De La Riva Guard	X-Guard Entry	nogi
+Half Guard Bottom	Back Take	gi
+Half Guard Bottom	Back Take	nogi
+Half Guard Bottom	Deep Half Entry	gi
+Half Guard Bottom	Deep Half Entry	nogi
+Half Guard Bottom	Dogfight	gi
+Half Guard Bottom	Dogfight	nogi
+Half Guard Bottom	Electric Chair	gi
+Half Guard Bottom	Electric Chair	nogi
+Half Guard Bottom	Kimura from Half	gi
+Half Guard Bottom	Kimura from Half	nogi
+Half Guard Bottom	Knee Shield	gi
+Half Guard Bottom	Knee Shield	nogi
+Half Guard Bottom	Lockdown	gi
+Half Guard Bottom	Lockdown	nogi
+Half Guard Bottom	Old School Sweep	gi
+Half Guard Bottom	Old School Sweep	nogi
+Half Guard Bottom	Plan B Sweep	gi
+Half Guard Bottom	Plan B Sweep	nogi
+Half Guard Bottom	Underhook	gi
+Half Guard Bottom	Underhook	nogi
+Half Guard Top	Backstep Pass	gi
+Half Guard Top	Backstep Pass	nogi
+Half Guard Top	Crossface	gi
+Half Guard Top	Crossface	nogi
+Half Guard Top	Hip Switch Pass	gi
+Half Guard Top	Hip Switch Pass	nogi
+Half Guard Top	Knee Slice Pass	gi
+Half Guard Top	Knee Slice Pass	nogi
+Half Guard Top	Mount from Half	gi
+Half Guard Top	Mount from Half	nogi
+Half Guard Top	Smash Pass	gi
+Half Guard Top	Smash Pass	nogi
+Half Guard Top	Underhook Control	gi
+Half Guard Top	Underhook Control	nogi
+High Ground	Armbar	gi
+High Ground	Armbar	nogi
+High Ground	Back Take	gi
+High Ground	Back Take	nogi
+High Ground	High Ground Entry	gi
+High Ground	High Ground Entry	nogi
+High Ground	High Ground Retention	gi
+High Ground	High Ground Retention	nogi
+High Ground	High Ground Sweep	gi
+High Ground	High Ground Sweep	nogi
+High Ground	Kimura	gi
+High Ground	Kimura	nogi
+High Ground	Leg Entanglement Entry	gi
+High Ground	Leg Entanglement Entry	nogi
+High Ground	Mount Transition	gi
+High Ground	Mount Transition	nogi
+High Ground	Omoplata	gi
+High Ground	Omoplata	nogi
+High Ground	Triangle	gi
+High Ground	Triangle	nogi
+K Guard	Back Take	gi
+K Guard	Back Take	nogi
+K Guard	Backside 50/50 Entry	gi
+K Guard	Backside 50/50 Entry	nogi
+K Guard	Calf Slicer	gi
+K Guard	Calf Slicer	nogi
+K Guard	Cross Ashi Entry	gi
+K Guard	Cross Ashi Entry	nogi
+K Guard	Inside Heel Hook	gi
+K Guard	Inside Heel Hook	nogi
+K Guard	Inside Sankaku Entry	gi
+K Guard	Inside Sankaku Entry	nogi
+K Guard	K Guard Entry from Butterfly	gi
+K Guard	K Guard Entry from Butterfly	nogi
+K Guard	K Guard Entry from Half Guard	gi
+K Guard	K Guard Entry from Half Guard	nogi
+K Guard	K Guard Entry from Open Guard	gi
+K Guard	K Guard Entry from Open Guard	nogi
+K Guard	K Guard Retention	gi
+K Guard	K Guard Retention	nogi
+K Guard	K Guard Sweep	gi
+K Guard	K Guard Sweep	nogi
+K Guard	Kneebar	gi
+K Guard	Kneebar	nogi
+K Guard	Outside Ashi Entry	gi
+K Guard	Outside Ashi Entry	nogi
+K Guard	Outside Heel Hook	gi
+K Guard	Outside Heel Hook	nogi
+K Guard	Straight Ankle Lock	gi
+K Guard	Straight Ankle Lock	nogi
+Knee Shield	Collar Drag	gi
+Knee Shield	Frame Escape	gi
+Knee Shield	Frame Escape	nogi
+Knee Shield	Hip Bump Sweep	gi
+Knee Shield	Hip Bump Sweep	nogi
+Knee Shield	Omoplata	gi
+Knee Shield	Omoplata	nogi
+Knee Shield	Triangle	gi
+Knee Shield	Triangle	nogi
+Knee Shield	Underhook	gi
+Knee Shield	Underhook	nogi
+Knee on Belly	Armbar	gi
+Knee on Belly	Armbar	nogi
+Knee on Belly	Back Take	gi
+Knee on Belly	Back Take	nogi
+Knee on Belly	Baseball Bat Choke	gi
+Knee on Belly	Collar Choke	gi
+Knee on Belly	Escape KOB	gi
+Knee on Belly	Escape KOB	nogi
+Knee on Belly	Far Side Armbar	gi
+Knee on Belly	Far Side Armbar	nogi
+Knee on Belly	Mount Transition	gi
+Knee on Belly	Mount Transition	nogi
+Lasso Guard	Back Take	gi
+Lasso Guard	Bicep Slicer	gi
+Lasso Guard	Lasso Sweep	gi
+Lasso Guard	Omoplata	gi
+Lasso Guard	Pendulum Sweep	gi
+Lasso Guard	Triangle	gi
+Leg Entanglement	50/50 Entry	gi
+Leg Entanglement	50/50 Entry	nogi
+Leg Entanglement	Boot Escape	gi
+Leg Entanglement	Boot Escape	nogi
+Leg Entanglement	Calf Slicer	gi
+Leg Entanglement	Calf Slicer	nogi
+Leg Entanglement	Honeyhole/Saddle	gi
+Leg Entanglement	Honeyhole/Saddle	nogi
+Leg Entanglement	Inside Ashi	gi
+Leg Entanglement	Inside Ashi	nogi
+Leg Entanglement	Inside Heel Hook	gi
+Leg Entanglement	Inside Heel Hook	nogi
+Leg Entanglement	Kneebar	gi
+Leg Entanglement	Kneebar	nogi
+Leg Entanglement	Leg Defense	gi
+Leg Entanglement	Leg Defense	nogi
+Leg Entanglement	Outside Ashi	gi
+Leg Entanglement	Outside Ashi	nogi
+Leg Entanglement	Outside Heel Hook	gi
+Leg Entanglement	Outside Heel Hook	nogi
+Leg Entanglement	Saddle Entry	gi
+Leg Entanglement	Saddle Entry	nogi
+Leg Entanglement	Straight Ankle Lock	gi
+Leg Entanglement	Straight Ankle Lock	nogi
+Leg Entanglement	Toe Hold	gi
+Leg Entanglement	Toe Hold	nogi
+Lockdown	Back Take	gi
+Lockdown	Back Take	nogi
+Lockdown	Banana Split	gi
+Lockdown	Banana Split	nogi
+Lockdown	Dogfight Entry	gi
+Lockdown	Dogfight Entry	nogi
+Lockdown	Electric Chair Submission	gi
+Lockdown	Electric Chair Submission	nogi
+Lockdown	Electric Chair Sweep	gi
+Lockdown	Electric Chair Sweep	nogi
+Lockdown	Lockdown Entry	gi
+Lockdown	Lockdown Entry	nogi
+Lockdown	Old School Sweep	gi
+Lockdown	Old School Sweep	nogi
+Lockdown	Plan B	gi
+Lockdown	Plan B	nogi
+Lockdown	Vaporizer	gi
+Lockdown	Vaporizer	nogi
+Lockdown	Whip Up	gi
+Lockdown	Whip Up	nogi
+Mount Bottom	Elbow-Knee Escape	gi
+Mount Bottom	Elbow-Knee Escape	nogi
+Mount Bottom	Foot Lock Escape	gi
+Mount Bottom	Foot Lock Escape	nogi
+Mount Bottom	Heel Drag Escape	gi
+Mount Bottom	Heel Drag Escape	nogi
+Mount Bottom	Kipping Escape	gi
+Mount Bottom	Kipping Escape	nogi
+Mount Bottom	Trap and Roll	gi
+Mount Bottom	Trap and Roll	nogi
+Mount Bottom	Upa (Bridge and Roll)	gi
+Mount Bottom	Upa (Bridge and Roll)	nogi
+Mount Top	Americana	gi
+Mount Top	Americana	nogi
+Mount Top	Arm Triangle	gi
+Mount Top	Arm Triangle	nogi
+Mount Top	Armbar	gi
+Mount Top	Armbar	nogi
+Mount Top	Cross Collar Choke	gi
+Mount Top	Ezekiel Choke	gi
+Mount Top	Gift Wrap	gi
+Mount Top	Gift Wrap	nogi
+Mount Top	Maintaining Mount	gi
+Mount Top	Maintaining Mount	nogi
+Mount Top	Mounted Triangle	gi
+Mount Top	Mounted Triangle	nogi
+Mount Top	S-Mount Armbar	gi
+Mount Top	S-Mount Armbar	nogi
+Mount Top	Technical Mount	gi
+Mount Top	Technical Mount	nogi
+Mount Top	Wrist Lock	gi
+Mount Top	Wrist Lock	nogi
+North-South Bottom	Bridge Escape	gi
+North-South Bottom	Bridge Escape	nogi
+North-South Bottom	Frame and Hip Escape	gi
+North-South Bottom	Frame and Hip Escape	nogi
+North-South Bottom	Ghost Escape	gi
+North-South Bottom	Ghost Escape	nogi
+North-South Bottom	Granby Roll	gi
+North-South Bottom	Granby Roll	nogi
+North-South Top	Armbar	gi
+North-South Top	Armbar	nogi
+North-South Top	Kimura	gi
+North-South Top	Kimura	nogi
+North-South Top	Mount Transition	gi
+North-South Top	Mount Transition	nogi
+North-South Top	North-South Choke	gi
+North-South Top	North-South Choke	nogi
+North-South Top	Paper Cutter	gi
+North-South Top	Side Control Transition	gi
+North-South Top	Side Control Transition	nogi
+Octopus Guard	Armbar	gi
+Octopus Guard	Armbar	nogi
+Octopus Guard	Back Take	gi
+Octopus Guard	Back Take	nogi
+Octopus Guard	Guillotine	gi
+Octopus Guard	Guillotine	nogi
+Octopus Guard	Hip Bump Sweep	gi
+Octopus Guard	Hip Bump Sweep	nogi
+Octopus Guard	Octopus Entry from Half Guard	gi
+Octopus Guard	Octopus Entry from Half Guard	nogi
+Octopus Guard	Octopus Entry from Side Control	gi
+Octopus Guard	Octopus Entry from Side Control	nogi
+Octopus Guard	Octopus Sweep	gi
+Octopus Guard	Octopus Sweep	nogi
+Octopus Guard	Omoplata	gi
+Octopus Guard	Omoplata	nogi
+Octopus Guard	Triangle	gi
+Octopus Guard	Triangle	nogi
+Octopus Guard	Underhook Control	gi
+Octopus Guard	Underhook Control	nogi
+Reverse De La Riva	Back Take	gi
+Reverse De La Riva	Back Take	nogi
+Reverse De La Riva	Deep Half Entry	gi
+Reverse De La Riva	Deep Half Entry	nogi
+Reverse De La Riva	Kiss of Dragon	gi
+Reverse De La Riva	Kiss of Dragon	nogi
+Reverse De La Riva	Leg Drag Counter	gi
+Reverse De La Riva	Leg Drag Counter	nogi
+Reverse De La Riva	RDLR Sweep	gi
+Reverse De La Riva	RDLR Sweep	nogi
+Rubber Guard	Armbar	gi
+Rubber Guard	Armbar	nogi
+Rubber Guard	Gogoplata	gi
+Rubber Guard	Gogoplata	nogi
+Rubber Guard	Mission Control	gi
+Rubber Guard	Mission Control	nogi
+Rubber Guard	Omoplata	gi
+Rubber Guard	Omoplata	nogi
+Rubber Guard	Sweep	gi
+Rubber Guard	Sweep	nogi
+Rubber Guard	Triangle	gi
+Rubber Guard	Triangle	nogi
+Side Control Bottom	Bridge and Roll	gi
+Side Control Bottom	Bridge and Roll	nogi
+Side Control Bottom	Elbow-Knee Escape	gi
+Side Control Bottom	Elbow-Knee Escape	nogi
+Side Control Bottom	Frame and Hip Escape	gi
+Side Control Bottom	Frame and Hip Escape	nogi
+Side Control Bottom	Ghost Escape	gi
+Side Control Bottom	Ghost Escape	nogi
+Side Control Bottom	Guard Recovery	gi
+Side Control Bottom	Guard Recovery	nogi
+Side Control Bottom	Running Escape	gi
+Side Control Bottom	Running Escape	nogi
+Side Control Bottom	Underhook Escape	gi
+Side Control Bottom	Underhook Escape	nogi
+Side Control Top	Americana	gi
+Side Control Top	Americana	nogi
+Side Control Top	Arm Triangle	gi
+Side Control Top	Arm Triangle	nogi
+Side Control Top	Armbar	gi
+Side Control Top	Armbar	nogi
+Side Control Top	Back Take	gi
+Side Control Top	Back Take	nogi
+Side Control Top	Baseball Bat Choke	gi
+Side Control Top	Bread Cutter Choke	gi
+Side Control Top	Kimura	gi
+Side Control Top	Kimura	nogi
+Side Control Top	Knee on Belly	gi
+Side Control Top	Knee on Belly	nogi
+Side Control Top	Maintaining Side Control	gi
+Side Control Top	Maintaining Side Control	nogi
+Side Control Top	Mount Transition	gi
+Side Control Top	Mount Transition	nogi
+Side Control Top	North-South Choke	gi
+Side Control Top	North-South Choke	nogi
+Side Control Top	Paper Cutter Choke	gi
+Single Leg X	Back Take	gi
+Single Leg X	Back Take	nogi
+Single Leg X	Heel Hook Entry	gi
+Single Leg X	Heel Hook Entry	nogi
+Single Leg X	Kneebar Entry	gi
+Single Leg X	Kneebar Entry	nogi
+Single Leg X	Straight Ankle Lock	gi
+Single Leg X	Straight Ankle Lock	nogi
+Single Leg X	Sweep to Top	gi
+Single Leg X	Sweep to Top	nogi
+Single Leg X	X-Guard Transition	gi
+Single Leg X	X-Guard Transition	nogi
+Spider Guard	Armbar	gi
+Spider Guard	Balloon Sweep	gi
+Spider Guard	Lasso Transition	gi
+Spider Guard	Omoplata	gi
+Spider Guard	Spider Sweep	gi
+Spider Guard	Technical Stand Up	gi
+Spider Guard	Triangle	gi
+Standing	Ankle Pick	gi
+Standing	Ankle Pick	nogi
+Standing	Arm Drag to Back	gi
+Standing	Arm Drag to Back	nogi
+Standing	Body Lock Takedown	gi
+Standing	Body Lock Takedown	nogi
+Standing	Collar Drag	gi
+Standing	Double Leg Takedown	gi
+Standing	Double Leg Takedown	nogi
+Standing	Duck Under	gi
+Standing	Duck Under	nogi
+Standing	Foot Sweep	gi
+Standing	Foot Sweep	nogi
+Standing	Guard Pull	gi
+Standing	Guard Pull	nogi
+Standing	Osoto Gari	gi
+Standing	Ouchi Gari	gi
+Standing	Seoi Nage	gi
+Standing	Single Leg Takedown	gi
+Standing	Single Leg Takedown	nogi
+Standing	Snap Down	gi
+Standing	Snap Down	nogi
+Standing	Sprawl	gi
+Standing	Sprawl	nogi
+Turtle Bottom	Granby Roll	gi
+Turtle Bottom	Granby Roll	nogi
+Turtle Bottom	Guard Recovery	gi
+Turtle Bottom	Guard Recovery	nogi
+Turtle Bottom	Single Leg Counter	gi
+Turtle Bottom	Single Leg Counter	nogi
+Turtle Bottom	Sit Out	gi
+Turtle Bottom	Sit Out	nogi
+Turtle Bottom	Stand Up	gi
+Turtle Bottom	Stand Up	nogi
+Turtle Bottom	Switch	gi
+Turtle Bottom	Switch	nogi
+Turtle Top	Anaconda Choke	gi
+Turtle Top	Anaconda Choke	nogi
+Turtle Top	Back Take	gi
+Turtle Top	Back Take	nogi
+Turtle Top	Clock Choke	gi
+Turtle Top	Crucifix Entry	gi
+Turtle Top	Crucifix Entry	nogi
+Turtle Top	Darce Choke	gi
+Turtle Top	Darce Choke	nogi
+Turtle Top	Front Headlock	gi
+Turtle Top	Front Headlock	nogi
+Turtle Top	Guillotine	gi
+Turtle Top	Guillotine	nogi
+Turtle Top	Turnover	gi
+Turtle Top	Turnover	nogi
+Waiter Guard	Back Take	gi
+Waiter Guard	Back Take	nogi
+Waiter Guard	Calf Slicer	gi
+Waiter Guard	Calf Slicer	nogi
+Waiter Guard	Heel Hook Entry	gi
+Waiter Guard	Heel Hook Entry	nogi
+Waiter Guard	Kneebar	gi
+Waiter Guard	Kneebar	nogi
+Waiter Guard	Leg Drag Counter	gi
+Waiter Guard	Leg Drag Counter	nogi
+Waiter Guard	Overhead Sweep	gi
+Waiter Guard	Overhead Sweep	nogi
+Waiter Guard	Scissor Sweep	gi
+Waiter Guard	Scissor Sweep	nogi
+Waiter Guard	Toe Hold	gi
+Waiter Guard	Toe Hold	nogi
+Waiter Guard	Waiter Entry from Half Guard	gi
+Waiter Guard	Waiter Entry from Half Guard	nogi
+Waiter Guard	Waiter Entry from X-Guard	gi
+Waiter Guard	Waiter Entry from X-Guard	nogi
+Waiter Guard	Waiter Sweep	gi
+Waiter Guard	Waiter Sweep	nogi
+Waiter Guard	Waiter to Single Leg X	gi
+Waiter Guard	Waiter to Single Leg X	nogi
+Waiter Guard	Waiter to X-Guard	gi
+Waiter Guard	Waiter to X-Guard	nogi
+Worm Guard	Back Take	gi
+Worm Guard	Omoplata	gi
+Worm Guard	Squid Guard Entry	gi
+Worm Guard	Worm Guard Entry	gi
+Worm Guard	Worm Guard Sweep	gi
+X-Guard	Back Take	gi
+X-Guard	Back Take	nogi
+X-Guard	Leg Lock Entry	gi
+X-Guard	Leg Lock Entry	nogi
+X-Guard	Overhead Sweep	gi
+X-Guard	Overhead Sweep	nogi
+X-Guard	Single Leg Sweep	gi
+X-Guard	Single Leg Sweep	nogi
+X-Guard	Technical Stand Up Sweep	gi
+X-Guard	Technical Stand Up Sweep	nogi
+X-Guard	Waiter Sweep	gi
+X-Guard	Waiter Sweep	nogi
+Z-Guard	Back Take	gi
+Z-Guard	Back Take	nogi
+Z-Guard	Kimura	gi
+Z-Guard	Kimura	nogi
+Z-Guard	Knee Shield Sweep	gi
+Z-Guard	Knee Shield Sweep	nogi
+Z-Guard	Triangle Entry	gi
+Z-Guard	Triangle Entry	nogi
+Z-Guard	Underhook	gi
+Z-Guard	Underhook	nogi
