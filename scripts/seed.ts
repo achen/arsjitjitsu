@@ -372,6 +372,25 @@ const techniques: Technique[] = [
   { name: 'Cross Ashi Entry', position: 'K Guard', type: 'Transition', description: 'Transition to cross ashi/honey hole', gi_type: 'both' },
   { name: 'K Guard Retention', position: 'K Guard', type: 'Defense', description: 'Maintaining K Guard against passes', gi_type: 'both' },
   { name: 'Calf Slicer', position: 'K Guard', type: 'Submission', description: 'Calf slicer from K Guard transitions', gi_type: 'both' },
+
+  // Collar Sleeve Guard
+  { name: 'Triangle Choke', position: 'Collar Sleeve Guard', type: 'Submission', description: 'Triangle setup using collar and sleeve control', gi_type: 'gi' },
+  { name: 'Omoplata', position: 'Collar Sleeve Guard', type: 'Submission', description: 'Omoplata using sleeve control to off-balance', gi_type: 'gi' },
+  { name: 'Armbar', position: 'Collar Sleeve Guard', type: 'Submission', description: 'Armbar attack from collar sleeve grips', gi_type: 'gi' },
+  { name: 'Collar Drag', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Pull opponent forward with collar grip', gi_type: 'gi' },
+  { name: 'Scissor Sweep', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Classic sweep using collar sleeve control', gi_type: 'gi' },
+  { name: 'Overhead Sweep', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Balloon sweep with collar sleeve grips', gi_type: 'gi' },
+  { name: 'Tomoe Nage', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Sacrifice throw to sweep from collar sleeve', gi_type: 'gi' },
+  { name: 'Back Take', position: 'Collar Sleeve Guard', type: 'Transition', description: 'Use collar drag to take the back', gi_type: 'gi' },
+  { name: 'Lasso Transition', position: 'Collar Sleeve Guard', type: 'Transition', description: 'Transition to lasso guard from collar sleeve', gi_type: 'gi' },
+  { name: 'Spider Transition', position: 'Collar Sleeve Guard', type: 'Transition', description: 'Move to spider guard from collar sleeve', gi_type: 'gi' },
+  { name: 'De La Riva Transition', position: 'Collar Sleeve Guard', type: 'Transition', description: 'Transition to DLR from collar sleeve', gi_type: 'gi' },
+  { name: 'Hip Bump Sweep', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Sit-up sweep with collar grip', gi_type: 'gi' },
+  { name: 'Sickle Sweep', position: 'Collar Sleeve Guard', type: 'Sweep', description: 'Hook behind leg and sweep with collar control', gi_type: 'gi' },
+  { name: 'Loop Choke', position: 'Collar Sleeve Guard', type: 'Submission', description: 'Collar choke when opponent postures', gi_type: 'gi' },
+  { name: 'Collar Sleeve Retention', position: 'Collar Sleeve Guard', type: 'Defense', description: 'Maintaining grips and distance control', gi_type: 'gi' },
+  { name: 'Foot on Hip Control', position: 'Collar Sleeve Guard', type: 'Setup', description: 'Using foot on hip to manage distance', gi_type: 'gi' },
+  { name: 'Foot on Bicep Control', position: 'Collar Sleeve Guard', type: 'Setup', description: 'Bicep control with foot for attacks', gi_type: 'gi' },
 ];
 
 async function seed() {

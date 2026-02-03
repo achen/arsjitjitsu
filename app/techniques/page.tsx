@@ -40,7 +40,7 @@ const POSITIONS = [
   'Mount Top', 'Mount Bottom', 'Side Control Top', 'Side Control Bottom',
   'Back Control', 'Back Defense', 'Closed Guard Top', 'Closed Guard Bottom',
   'Half Guard Top', 'Half Guard Bottom', 'Butterfly Guard', 'Butterfly Half',
-  'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'X-Guard', 'Single Leg X',
+  'De La Riva Guard', 'Reverse De La Riva', 'Spider Guard', 'Lasso Guard', 'Collar Sleeve Guard', 'X-Guard', 'Single Leg X',
   '50/50', 'Knee Shield', 'Z-Guard', 'Lockdown', 'Octopus Guard', 'High Ground', 'K Guard',
   'Rubber Guard', 'Worm Guard', 'Waiter Guard', 'Standing',
   'Turtle Top', 'Turtle Bottom', 'North-South Top', 'North-South Bottom',
