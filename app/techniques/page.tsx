@@ -117,6 +117,9 @@ export default function TechniquesPage() {
   const [createForm, setCreateForm] = useState({ name: '', type: 'Submission', description: '', giType: 'nogi' });
   const [savingCreate, setSavingCreate] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
+  
+  // Admin delete video state
+  const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
 
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
@@ -603,6 +606,35 @@ export default function TechniquesPage() {
     });
   };
 
+  const deleteVideo = async (techniqueId: string, videoId: string) => {
+    if (!user?.isAdmin) return;
+    if (!confirm('Remove this video from this technique?')) return;
+
+    setDeletingVideo(videoId);
+    try {
+      const res = await fetch(`/api/admin/videos/map?videoId=${videoId}`, {
+        method: 'DELETE',
+      });
+
+      if (res.ok) {
+        // Update local state to remove the video
+        setTechniques(prev => prev.map(t => {
+          if (t.id === techniqueId) {
+            return {
+              ...t,
+              videos: t.videos.filter(v => v.id !== videoId),
+            };
+          }
+          return t;
+        }));
+      }
+    } catch (error) {
+      console.error('Delete video error:', error);
+    } finally {
+      setDeletingVideo(null);
+    }
+  };
+
   const getRatingColor = (rating: number | null) => {
     if (rating === null || rating === 0) return 'bg-gray-100 dark:bg-gray-700';
     if (rating === 1) return 'bg-gray-200 dark:bg-gray-600';
@@ -1035,6 +1067,19 @@ export default function TechniquesPage() {
                                     </div>
                                     <ExternalLink size={14} className="text-gray-400 flex-shrink-0" />
                                   </a>
+                                  {user?.isAdmin && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        deleteVideo(technique.id, video.id);
+                                      }}
+                                      disabled={deletingVideo === video.id}
+                                      className="flex-shrink-0 p-1 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors"
+                                      title="Remove video from technique"
+                                    >
+                                      <Trash2 size={14} className={deletingVideo === video.id ? 'opacity-50' : ''} />
+                                    </button>
+                                  )}
                                 </div>
                                   );
                                 })}
