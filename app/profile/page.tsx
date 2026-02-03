@@ -213,7 +213,7 @@ export default function ProfilePage() {
   // Edit profile state
   const [profileForm, setProfileForm] = useState({
     name: '',
-    isPublic: true,
+    isPublic: false,
     birthDate: '',
     country: '',
     city: '',

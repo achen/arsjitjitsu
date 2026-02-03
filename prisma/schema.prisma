@@ -17,7 +17,7 @@ model User {
   name          String
   belt          String           @default("white")
   isAdmin       Boolean          @default(false) @map("is_admin")
-  isPublic      Boolean          @default(true) @map("is_public")
+  isPublic      Boolean          @default(false) @map("is_public")
   birthDate     DateTime?        @map("birth_date")
   country       String?
   city          String?
