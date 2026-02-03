@@ -111,6 +111,12 @@ export default function TechniquesPage() {
   const [editForm, setEditForm] = useState({ name: '', position: '', type: '', description: '', giType: 'both' });
   const [savingEdit, setSavingEdit] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  
+  // Admin create state
+  const [creatingForPosition, setCreatingForPosition] = useState<string | null>(null);
+  const [createForm, setCreateForm] = useState({ name: '', type: 'Submission', description: '', giType: 'both' });
+  const [savingCreate, setSavingCreate] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
 
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
@@ -297,6 +303,59 @@ export default function TechniquesPage() {
       setEditError('Network error');
     } finally {
       setSavingEdit(false);
+    }
+  };
+
+  const openCreateModal = (position: string) => {
+    setCreatingForPosition(position);
+    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'both' });
+    setCreateError(null);
+  };
+
+  const closeCreateModal = () => {
+    setCreatingForPosition(null);
+    setCreateForm({ name: '', type: 'Submission', description: '', giType: 'both' });
+    setCreateError(null);
+  };
+
+  const createTechnique = async () => {
+    if (!creatingForPosition || !createForm.name || !createForm.type) return;
+    
+    setSavingCreate(true);
+    setCreateError(null);
+    
+    try {
+      const res = await fetch('/api/admin/techniques', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createForm.name,
+          position: creatingForPosition,
+          type: createForm.type,
+          description: createForm.description || null,
+          giType: createForm.giType,
+        }),
+      });
+
+      if (res.ok) {
+        const { technique } = await res.json();
+        // Add the new technique to the list with default values for user-specific fields
+        setTechniques(prev => [...prev, { 
+          ...technique, 
+          rating: null, 
+          notes: null, 
+          workingOn: false, 
+          videos: [] 
+        }]);
+        closeCreateModal();
+      } else {
+        const data = await res.json();
+        setCreateError(data.error || 'Failed to create');
+      }
+    } catch (error) {
+      setCreateError('Network error');
+    } finally {
+      setSavingCreate(false);
     }
   };
 
@@ -812,6 +871,16 @@ export default function TechniquesPage() {
                         {workingOnCount}
                       </span>
                     )}
+                    {user?.isAdmin && (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); openCreateModal(position); }}
+                        className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800"
+                        title={`Add technique to ${position}`}
+                      >
+                        <Plus size={12} />
+                        Add
+                      </button>
+                    )}
                   </div>
                   {isCollapsed ? <ChevronDown size={20} className="text-gray-500" /> : <ChevronUp size={20} className="text-gray-500" />}
                 </button>
@@ -1183,6 +1252,107 @@ export default function TechniquesPage() {
                     {savingEdit ? 'Saving...' : 'Save Changes'}
                   </button>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Technique Modal */}
+      {creatingForPosition && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Add Technique to {creatingForPosition}
+                </h2>
+                <button
+                  onClick={closeCreateModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {createError && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-300 text-red-700 rounded-lg text-sm">
+                  {createError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, name: e.target.value }))}
+                    placeholder="e.g., Armbar from Mount"
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Type *
+                  </label>
+                  <select
+                    value={createForm.type}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, type: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    {TYPES.map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Gi Type
+                  </label>
+                  <select
+                    value={createForm.giType}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, giType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  >
+                    <option value="both">Both (Gi & No-Gi)</option>
+                    <option value="gi">Gi Only</option>
+                    <option value="nogi">No-Gi Only</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={createForm.description}
+                    onChange={(e) => setCreateForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    placeholder="Optional description..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={closeCreateModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={createTechnique}
+                  disabled={savingCreate || !createForm.name || !createForm.type}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {savingCreate ? 'Creating...' : 'Create Technique'}
+                </button>
               </div>
             </div>
           </div>
