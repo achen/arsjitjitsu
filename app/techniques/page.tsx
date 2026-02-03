@@ -48,7 +48,7 @@ const POSITIONS = [
 ];
 
 const TYPES = [
-  'Escape', 'Sweep', 'Reversal', 'Takedown', 'Submission', 'Pass', 'Transition', 'Setup', 'Defense'
+  'Escape', 'Sweep', 'Reversal', 'Takedown', 'Submission', 'Pass', 'Transition', 'Setup', 'Defense', 'Variant'
 ];
 
 const RATING_OPTIONS = [
