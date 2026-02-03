@@ -17,14 +17,33 @@ model User {
   name          String
   belt          String           @default("white")
   isAdmin       Boolean          @default(false) @map("is_admin")
+  isPublic      Boolean          @default(true) @map("is_public")
+  birthDate     DateTime?        @map("birth_date")
+  country       String?
+  city          String?
+  gym           String?
   createdAt     DateTime         @default(now()) @map("created_at")
   updatedAt     DateTime         @updatedAt @map("updated_at")
   ratings       UserRating[]
   notes         TechniqueNote[]
   bookmarks     VideoBookmark[]
   ratingHistory RatingHistory[]
+  beltHistory   BeltHistory[]
 
   @@map("users")
+}
+
+model BeltHistory {
+  id         String   @id @default(uuid())
+  userId     String   @map("user_id")
+  belt       String
+  achievedAt DateTime @map("achieved_at")
+  createdAt  DateTime @default(now()) @map("created_at")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, achievedAt])
+  @@map("belt_history")
 }
 
 model Technique {

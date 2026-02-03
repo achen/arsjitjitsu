@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { LogIn, LogOut, User, BookOpen, Trophy, Menu, X, Settings, ChevronDown, Video } from 'lucide-react';
+import { LogIn, LogOut, User, BookOpen, Trophy, Menu, X, Settings, ChevronDown, Video, Medal } from 'lucide-react';
 
 interface UserData {
   id: string;
@@ -90,6 +90,14 @@ export default function Navigation() {
             >
               <BookOpen size={20} />
               <span>Techniques</span>
+            </Link>
+
+            <Link
+              href="/leaderboard"
+              className="flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
+            >
+              <Medal size={20} />
+              <span>Leaderboard</span>
             </Link>
 
             {!loading && (
@@ -183,6 +191,14 @@ export default function Navigation() {
             >
               <BookOpen size={20} />
               <span>Techniques</span>
+            </Link>
+            <Link
+              href="/leaderboard"
+              className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
+              onClick={() => setMenuOpen(false)}
+            >
+              <Medal size={20} />
+              <span>Leaderboard</span>
             </Link>
             {user ? (
               <>
