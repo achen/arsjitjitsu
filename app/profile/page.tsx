@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import Navigation from '@/components/Navigation';
-import { Trophy, Target, TrendingUp, Clock, Edit2, MapPin, Building2, Calendar, Globe, User as UserIcon, X, Check, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, MapPin, Calendar, Globe, User as UserIcon, Check, Plus, Trash2, Edit2 } from 'lucide-react';
 
 interface BeltHistoryEntry {
   id: string;
@@ -21,59 +22,7 @@ interface User {
   country: string | null;
   city: string | null;
   gym: string | null;
-  createdAt: string;
-  beltHistory: BeltHistoryEntry[];
 }
-
-interface PositionStats {
-  position: string;
-  total_count: number;
-  rated_count: number;
-  total_points: number;
-  avg_rating: number | null;
-}
-
-interface TypeStats {
-  type: string;
-  total_count: number;
-  rated_count: number;
-  total_points: number;
-  avg_rating: number | null;
-}
-
-interface RecentRating {
-  id: string;
-  technique_name: string;
-  position: string;
-  type: string;
-  rating: number;
-  updated_at: string;
-}
-
-interface Stats {
-  totalScore: number;
-  ratedTechniques: number;
-  totalTechniques: number;
-  byPosition: PositionStats[];
-  byType: TypeStats[];
-  recentRatings: RecentRating[];
-}
-
-interface ScorePoint {
-  date: string;
-  score: number;
-}
-
-const RATING_LABELS = [
-  "Don't know",
-  "White",
-  "Blue",
-  "Purple",
-  "Brown",
-  "Black",
-  "Comp BB",
-  "World"
-];
 
 // All belts - kids and adults
 const KIDS_BELTS = [
@@ -109,106 +58,10 @@ function getBeltInfo(belt: string) {
   return ALL_BELTS.find(b => b.value === belt) || { value: belt, label: belt, color: 'bg-gray-400' };
 }
 
-// Simple SVG Line Chart component
-function ScoreChart({ data }: { data: ScorePoint[] }) {
-  if (data.length < 2) return null;
-
-  const width = 600;
-  const height = 200;
-  const padding = { top: 20, right: 20, bottom: 40, left: 50 };
-  const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
-
-  const scores = data.map(d => d.score);
-  const minScore = Math.min(...scores);
-  const maxScore = Math.max(...scores);
-  const scoreRange = maxScore - minScore || 1;
-
-  const dates = data.map(d => new Date(d.date).getTime());
-  const minDate = Math.min(...dates);
-  const maxDate = Math.max(...dates);
-  const dateRange = maxDate - minDate || 1;
-
-  const getX = (date: string) => {
-    const t = new Date(date).getTime();
-    return padding.left + ((t - minDate) / dateRange) * chartWidth;
-  };
-
-  const getY = (score: number) => {
-    return padding.top + chartHeight - ((score - minScore) / scoreRange) * chartHeight;
-  };
-
-  const pathD = data.map((point, i) => {
-    const x = getX(point.date);
-    const y = getY(point.score);
-    return `${i === 0 ? 'M' : 'L'} ${x} ${y}`;
-  }).join(' ');
-
-  const areaD = pathD + ` L ${getX(data[data.length - 1].date)} ${padding.top + chartHeight} L ${getX(data[0].date)} ${padding.top + chartHeight} Z`;
-
-  const formatDate = (dateStr: string) => {
-    const d = new Date(dateStr);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const yLabels = [minScore, Math.round((minScore + maxScore) / 2), maxScore];
-
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-      {yLabels.map(score => (
-        <g key={score}>
-          <line
-            x1={padding.left}
-            y1={getY(score)}
-            x2={width - padding.right}
-            y2={getY(score)}
-            stroke="currentColor"
-            strokeOpacity={0.1}
-            strokeDasharray="4 4"
-          />
-          <text
-            x={padding.left - 8}
-            y={getY(score)}
-            textAnchor="end"
-            alignmentBaseline="middle"
-            className="fill-gray-500 text-xs"
-          >
-            {score}
-          </text>
-        </g>
-      ))}
-      <path d={areaD} fill="url(#gradient)" opacity={0.3} />
-      <path d={pathD} fill="none" stroke="#3B82F6" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-      {data.map((point, i) => (
-        <circle key={i} cx={getX(point.date)} cy={getY(point.score)} r={3} fill="#3B82F6" />
-      ))}
-      <text x={getX(data[0].date)} y={height - 10} textAnchor="start" className="fill-gray-500 text-xs">
-        {formatDate(data[0].date)}
-      </text>
-      <text x={getX(data[data.length - 1].date)} y={height - 10} textAnchor="end" className="fill-gray-500 text-xs">
-        {formatDate(data[data.length - 1].date)}
-      </text>
-      <defs>
-        <linearGradient id="gradient" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#3B82F6" />
-          <stop offset="100%" stopColor="#3B82F6" stopOpacity={0} />
-        </linearGradient>
-      </defs>
-    </svg>
-  );
-}
-
 export default function ProfilePage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const [user, setUser] = useState<User | null>(null);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [scoreHistory, setScoreHistory] = useState<ScorePoint[]>([]);
   const [loading, setLoading] = useState(true);
-  
-  // Check for tab query param to open edit profile directly
-  const initialTab = searchParams.get('tab') === 'edit' ? 'profile' : 'overview';
-  const [activeTab, setActiveTab] = useState<'overview' | 'positions' | 'types' | 'profile'>(initialTab);
   
   // Edit profile state
   const [profileForm, setProfileForm] = useState({
@@ -251,37 +104,11 @@ export default function ProfilePage() {
         city: data.user.city || '',
         gym: data.user.gym || '',
       });
-      fetchStats();
-      fetchScoreHistory();
     } catch (error) {
       console.error('Auth check error:', error);
       router.push('/auth/login');
-    }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const res = await fetch('/api/stats');
-      if (res.ok) {
-        const data = await res.json();
-        setStats(data);
-      }
-    } catch (error) {
-      console.error('Fetch stats error:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchScoreHistory = async () => {
-    try {
-      const res = await fetch('/api/stats/history');
-      if (res.ok) {
-        const data = await res.json();
-        setScoreHistory(data.timeline);
-      }
-    } catch (error) {
-      console.error('Fetch score history error:', error);
     }
   };
 
@@ -295,7 +122,7 @@ export default function ProfilePage() {
       });
       if (res.ok) {
         const data = await res.json();
-        setUser(prev => prev ? { ...prev, ...data.user, beltHistory: prev.beltHistory } : null);
+        setUser(prev => prev ? { ...prev, ...data.user } : null);
       }
     } catch (error) {
       console.error('Save profile error:', error);
@@ -320,7 +147,6 @@ export default function ProfilePage() {
           new Date(a.achievedAt).getTime() - new Date(b.achievedAt).getTime()
         );
         setBeltHistory(updatedHistory);
-        // Update user's current belt to the most recent one
         const mostRecentBelt = updatedHistory[updatedHistory.length - 1]?.belt || 'white';
         setUser(prev => prev ? { ...prev, belt: mostRecentBelt } : null);
         setNewBeltEntry({ belt: '', achievedAt: '' });
@@ -343,7 +169,6 @@ export default function ProfilePage() {
       if (res.ok) {
         const updatedHistory = beltHistory.filter(e => e.id !== entryId);
         setBeltHistory(updatedHistory);
-        // Update user's current belt to the most recent one, or white if none
         const mostRecentBelt = updatedHistory[updatedHistory.length - 1]?.belt || 'white';
         setUser(prev => prev ? { ...prev, belt: mostRecentBelt } : null);
       }
@@ -383,7 +208,6 @@ export default function ProfilePage() {
           new Date(a.achievedAt).getTime() - new Date(b.achievedAt).getTime()
         );
         setBeltHistory(updatedHistory);
-        // Update user's current belt to the most recent one
         const mostRecentBelt = updatedHistory[updatedHistory.length - 1]?.belt || 'white';
         setUser(prev => prev ? { ...prev, belt: mostRecentBelt } : null);
         setEditingBeltId(null);
@@ -426,561 +250,337 @@ export default function ProfilePage() {
     );
   }
 
-  if (!user || !stats) {
+  if (!user) {
     return null;
   }
 
   const beltInfo = getBeltInfo(user.belt);
-  const completionPercent = stats.totalTechniques > 0 
-    ? Math.round((stats.ratedTechniques / stats.totalTechniques) * 100) 
-    : 0;
-  const maxPossibleScore = stats.totalTechniques * 7;
-  const scorePercent = maxPossibleScore > 0 
-    ? Math.round((stats.totalScore / maxPossibleScore) * 100) 
-    : 0;
 
   return (
     <div className="min-h-screen">
       <Navigation />
       
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* User Header */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-16 h-16 rounded-full ${beltInfo.color} flex items-center justify-center`}
-                title={`${beltInfo.label} Belt`}
-              >
-                <span className="text-2xl">🥋</span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {user.name}
-                </h1>
-                <p className="text-gray-600 dark:text-gray-400">
-                  {beltInfo.label} Belt
-                </p>
-              </div>
+      <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-6">
+          <Link
+            href="/myprogress"
+            className="inline-flex items-center gap-2 text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 mb-4"
+          >
+            <ArrowLeft size={16} /> Back to My Progress
+          </Link>
+          <div className="flex items-center gap-4">
+            <div
+              className={`w-16 h-16 rounded-full ${beltInfo.color} flex items-center justify-center`}
+              title={`${beltInfo.label} Belt`}
+            >
+              <span className="text-2xl">🥋</span>
             </div>
-            <div className="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-              {user.gym && (
-                <span className="flex items-center gap-1">
-                  <Building2 size={14} /> {user.gym}
-                </span>
-              )}
-              {(user.city || user.country) && (
-                <span className="flex items-center gap-1">
-                  <MapPin size={14} /> {[user.city, user.country].filter(Boolean).join(', ')}
-                </span>
-              )}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                Edit Profile
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400">
+                {beltInfo.label} Belt
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                <Trophy className="text-blue-600 dark:text-blue-400" size={24} />
+        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-8">
+          {/* Personal Information */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <UserIcon size={20} /> Personal Information
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.name}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
               </div>
               <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Total Score</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.totalScore.toLocaleString()}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-green-100 dark:bg-green-900 rounded-lg">
-                <Target className="text-green-600 dark:text-green-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Techniques Rated</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.ratedTechniques} / {stats.totalTechniques}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-purple-100 dark:bg-purple-900 rounded-lg">
-                <TrendingUp className="text-purple-600 dark:text-purple-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Completion</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {completionPercent}%
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-xl shadow p-6">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg">
-                <Clock className="text-orange-600 dark:text-orange-400" size={24} />
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Avg Rating</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {stats.ratedTechniques > 0 
-                    ? (stats.totalScore / stats.ratedTechniques).toFixed(1)
-                    : '0'}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
-          <div className="border-b border-gray-200 dark:border-gray-700">
-            <nav className="flex overflow-x-auto">
-              {(['overview', 'positions', 'types', 'profile'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`px-6 py-4 text-sm font-medium capitalize whitespace-nowrap ${
-                    activeTab === tab
-                      ? 'border-b-2 border-blue-500 text-blue-600 dark:text-blue-400'
-                      : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                  }`}
-                >
-                  {tab === 'profile' ? 'Edit Profile' : tab}
-                </button>
-              ))}
-            </nav>
-          </div>
-
-          <div className="p-6">
-            {activeTab === 'overview' && (
-              <div className="space-y-6">
-                {scoreHistory.length > 1 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                      Score History
-                    </h3>
-                    <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
-                      <ScoreChart data={scoreHistory} />
-                    </div>
-                  </div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Date of Birth
+                </label>
+                <input
+                  type="date"
+                  value={profileForm.birthDate}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, birthDate: e.target.value }))}
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+                {profileForm.birthDate && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Age: {calculateAge(profileForm.birthDate)} years old
+                  </p>
                 )}
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Score Progress
-                  </h3>
-                  <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-blue-500 to-purple-500"
-                      style={{ width: `${scorePercent}%` }}
-                    />
-                  </div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-2">
-                    {stats.totalScore.toLocaleString()} / {maxPossibleScore.toLocaleString()} possible points ({scorePercent}%)
-                  </p>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    Recent Activity
-                  </h3>
-                  {stats.recentRatings.length === 0 ? (
-                    <p className="text-gray-500 dark:text-gray-400">
-                      No ratings yet. Start rating techniques to track your progress!
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {stats.recentRatings.map((rating) => (
-                        <div
-                          key={rating.id}
-                          className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                        >
-                          <div>
-                            <p className="font-medium text-gray-900 dark:text-white">
-                              {rating.technique_name}
-                            </p>
-                            <p className="text-sm text-gray-500 dark:text-gray-400">
-                              {rating.position} • {rating.type}
-                            </p>
-                          </div>
-                          <span className="px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm font-medium">
-                            {rating.rating}: {RATING_LABELS[rating.rating]}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
               </div>
-            )}
+            </div>
+          </div>
 
-            {activeTab === 'positions' && (
+          {/* Location & Gym */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <MapPin size={20} /> Location & Gym
+            </h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Progress by Position
-                </h3>
-                <div className="space-y-3">
-                  {stats.byPosition.map((pos) => (
-                    <div key={pos.position} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {pos.position}
-                        </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {pos.rated_count}/{pos.total_count} rated • {pos.total_points} pts
-                        </span>
-                      </div>
-                      <div className="h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-blue-500"
-                          style={{ width: `${pos.total_count > 0 ? (pos.rated_count / pos.total_count) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Country
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.country}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, country: e.target.value }))}
+                  placeholder="e.g. United States"
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
               </div>
-            )}
-
-            {activeTab === 'types' && (
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Progress by Technique Type
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {stats.byType.map((type) => (
-                    <div key={type.type} className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="font-medium text-gray-900 dark:text-white">
-                          {type.type}
-                        </span>
-                        <span className="text-xl font-bold text-blue-600 dark:text-blue-400">
-                          {type.total_points}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">
-                        {type.rated_count}/{type.total_count} techniques rated
-                        {type.avg_rating !== null && ` • Avg: ${type.avg_rating}`}
-                      </p>
-                      <div className="mt-2 h-2 bg-gray-200 dark:bg-gray-600 rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-green-500"
-                          style={{ width: `${type.total_count > 0 ? (type.rated_count / type.total_count) * 100 : 0}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  City
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.city}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, city: e.target.value }))}
+                  placeholder="e.g. Los Angeles"
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
               </div>
-            )}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  Gym / Academy
+                </label>
+                <input
+                  type="text"
+                  value={profileForm.gym}
+                  onChange={(e) => setProfileForm(prev => ({ ...prev, gym: e.target.value }))}
+                  placeholder="e.g. Gracie Barra"
+                  className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                />
+              </div>
+            </div>
+          </div>
 
-            {activeTab === 'profile' && (
-              <div className="space-y-8">
-                {/* Personal Information */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <UserIcon size={20} /> Personal Information
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Name
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.name}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Date of Birth
-                      </label>
-                      <input
-                        type="date"
-                        value={profileForm.birthDate}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, birthDate: e.target.value }))}
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                      {profileForm.birthDate && (
-                        <p className="text-xs text-gray-500 mt-1">
-                          Age: {calculateAge(profileForm.birthDate)} years old
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </div>
+          {/* Privacy */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Globe size={20} /> Privacy
+            </h3>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={profileForm.isPublic}
+                onChange={(e) => setProfileForm(prev => ({ ...prev, isPublic: e.target.checked }))}
+                className="w-5 h-5 rounded border-gray-300 dark:border-gray-600"
+              />
+              <div>
+                <p className="text-gray-900 dark:text-white font-medium">Show on Leaderboard</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Allow your name and score to appear on the public leaderboard
+                </p>
+              </div>
+            </label>
+          </div>
 
-                {/* Location & Gym */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <MapPin size={20} /> Location & Gym
-                  </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Country
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.country}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, country: e.target.value }))}
-                        placeholder="e.g. United States"
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        City
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.city}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, city: e.target.value }))}
-                        placeholder="e.g. Los Angeles"
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                        Gym / Academy
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.gym}
-                        onChange={(e) => setProfileForm(prev => ({ ...prev, gym: e.target.value }))}
-                        placeholder="e.g. Gracie Barra"
-                        className="w-full px-3 py-2 border rounded-lg dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Privacy */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Globe size={20} /> Privacy
-                  </h3>
-                  <label className="flex items-center gap-3 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={profileForm.isPublic}
-                      onChange={(e) => setProfileForm(prev => ({ ...prev, isPublic: e.target.checked }))}
-                      className="w-5 h-5 rounded border-gray-300 dark:border-gray-600"
-                    />
-                    <div>
-                      <p className="text-gray-900 dark:text-white font-medium">Show on Leaderboard</p>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Allow your name and score to appear on the public leaderboard
-                      </p>
-                    </div>
-                  </label>
-                </div>
-
-                {/* Belt History */}
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-                    <Calendar size={20} /> Belt History
-                  </h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
-                    Track when you received each belt. Your current belt is determined by the most recent promotion.
-                  </p>
+          {/* Belt History */}
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
+              <Calendar size={20} /> Belt History
+            </h3>
+            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+              Track when you received each belt. Your current belt is determined by the most recent promotion.
+            </p>
+            
+            {beltHistory.length > 0 && (
+              <div className="space-y-2 mb-4">
+                {beltHistory.map((entry) => {
+                  const entryBeltInfo = getBeltInfo(entry.belt);
+                  const isEditing = editingBeltId === entry.id;
                   
-                  {beltHistory.length > 0 && (
-                    <div className="space-y-2 mb-4">
-                      {beltHistory.map((entry) => {
-                        const entryBeltInfo = getBeltInfo(entry.belt);
-                        const isEditing = editingBeltId === entry.id;
-                        
-                        if (isEditing) {
-                          return (
-                            <div key={entry.id} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 border border-blue-200 dark:border-blue-800">
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Belt
-                                  </label>
-                                  <select
-                                    value={editBeltEntry.belt}
-                                    onChange={(e) => setEditBeltEntry(prev => ({ ...prev, belt: e.target.value }))}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                  >
-                                    <option value="">Select belt...</option>
-                                    <optgroup label="Kids Belts">
-                                      {KIDS_BELTS.map(b => (
-                                        <option key={b.value} value={b.value}>{b.label}</option>
-                                      ))}
-                                    </optgroup>
-                                    <optgroup label="Adult Belts">
-                                      {ADULT_BELTS.map(b => (
-                                        <option key={b.value} value={b.value}>{b.label}</option>
-                                      ))}
-                                    </optgroup>
-                                  </select>
-                                </div>
-                                <div>
-                                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Date Received
-                                  </label>
-                                  <input
-                                    type="date"
-                                    value={editBeltEntry.achievedAt}
-                                    onChange={(e) => setEditBeltEntry(prev => ({ ...prev, achievedAt: e.target.value }))}
-                                    className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                                  />
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <button
-                                  onClick={() => saveEditedBelt(entry.id)}
-                                  disabled={savingBeltHistory || !editBeltEntry.belt || !editBeltEntry.achievedAt}
-                                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
-                                >
-                                  <Check size={16} /> Save
-                                </button>
-                                <button
-                                  onClick={cancelEditingBelt}
-                                  className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
-                                >
-                                  Cancel
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        }
-                        
-                        return (
-                          <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                            <div className="flex items-center gap-3">
-                              <div className={`w-8 h-8 rounded-full ${entryBeltInfo.color}`}></div>
-                              <div>
-                                <p className="font-medium text-gray-900 dark:text-white">
-                                  {entryBeltInfo.label} Belt
-                                </p>
-                                <p className="text-sm text-gray-500 dark:text-gray-400">
-                                  {formatDate(entry.achievedAt)}
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <button
-                                onClick={() => startEditingBelt(entry)}
-                                className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
-                                title="Edit"
-                              >
-                                <Edit2 size={16} />
-                              </button>
-                              <button
-                                onClick={() => deleteBeltHistoryEntry(entry.id)}
-                                className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
-                                title="Delete"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
+                  if (isEditing) {
+                    return (
+                      <div key={entry.id} className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg space-y-3 border border-blue-200 dark:border-blue-800">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Belt
+                            </label>
+                            <select
+                              value={editBeltEntry.belt}
+                              onChange={(e) => setEditBeltEntry(prev => ({ ...prev, belt: e.target.value }))}
+                              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                            >
+                              <option value="">Select belt...</option>
+                              <optgroup label="Kids Belts">
+                                {KIDS_BELTS.map(b => (
+                                  <option key={b.value} value={b.value}>{b.label}</option>
+                                ))}
+                              </optgroup>
+                              <optgroup label="Adult Belts">
+                                {ADULT_BELTS.map(b => (
+                                  <option key={b.value} value={b.value}>{b.label}</option>
+                                ))}
+                              </optgroup>
+                            </select>
                           </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {addingBeltHistory ? (
-                    <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Belt
-                          </label>
-                          <select
-                            value={newBeltEntry.belt}
-                            onChange={(e) => setNewBeltEntry(prev => ({ ...prev, belt: e.target.value }))}
-                            className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                              Date Received
+                            </label>
+                            <input
+                              type="date"
+                              value={editBeltEntry.achievedAt}
+                              onChange={(e) => setEditBeltEntry(prev => ({ ...prev, achievedAt: e.target.value }))}
+                              className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                            />
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => saveEditedBelt(entry.id)}
+                            disabled={savingBeltHistory || !editBeltEntry.belt || !editBeltEntry.achievedAt}
+                            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                           >
-                            <option value="">Select belt...</option>
-                            <optgroup label="Kids Belts">
-                              {KIDS_BELTS.map(b => (
-                                <option key={b.value} value={b.value}>{b.label}</option>
-                              ))}
-                            </optgroup>
-                            <optgroup label="Adult Belts">
-                              {ADULT_BELTS.map(b => (
-                                <option key={b.value} value={b.value}>{b.label}</option>
-                              ))}
-                            </optgroup>
-                          </select>
-                        </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                            Date Received
-                          </label>
-                          <input
-                            type="date"
-                            value={newBeltEntry.achievedAt}
-                            onChange={(e) => setNewBeltEntry(prev => ({ ...prev, achievedAt: e.target.value }))}
-                            className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
-                          />
+                            <Check size={16} /> Save
+                          </button>
+                          <button
+                            onClick={cancelEditingBelt}
+                            className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                          >
+                            Cancel
+                          </button>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                    );
+                  }
+                  
+                  return (
+                    <div key={entry.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-8 h-8 rounded-full ${entryBeltInfo.color}`}></div>
+                        <div>
+                          <p className="font-medium text-gray-900 dark:text-white">
+                            {entryBeltInfo.label} Belt
+                          </p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {formatDate(entry.achievedAt)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1">
                         <button
-                          onClick={addBeltHistoryEntry}
-                          disabled={savingBeltHistory || !newBeltEntry.belt || !newBeltEntry.achievedAt}
-                          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                          onClick={() => startEditingBelt(entry)}
+                          className="p-2 text-blue-600 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded"
+                          title="Edit"
                         >
-                          <Check size={16} /> Save
+                          <Edit2 size={16} />
                         </button>
                         <button
-                          onClick={() => {
-                            setAddingBeltHistory(false);
-                            setNewBeltEntry({ belt: '', achievedAt: '' });
-                          }}
-                          className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                          onClick={() => deleteBeltHistoryEntry(entry.id)}
+                          className="p-2 text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 rounded"
+                          title="Delete"
                         >
-                          Cancel
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setAddingBeltHistory(true)}
-                      className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500"
-                    >
-                      <Plus size={16} /> Add Belt Promotion
-                    </button>
-                  )}
-                </div>
+                  );
+                })}
+              </div>
+            )}
 
-                {/* Save Button */}
-                <div className="flex justify-end">
+            {addingBeltHistory ? (
+              <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Belt
+                    </label>
+                    <select
+                      value={newBeltEntry.belt}
+                      onChange={(e) => setNewBeltEntry(prev => ({ ...prev, belt: e.target.value }))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                    >
+                      <option value="">Select belt...</option>
+                      <optgroup label="Kids Belts">
+                        {KIDS_BELTS.map(b => (
+                          <option key={b.value} value={b.value}>{b.label}</option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Adult Belts">
+                        {ADULT_BELTS.map(b => (
+                          <option key={b.value} value={b.value}>{b.label}</option>
+                        ))}
+                      </optgroup>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                      Date Received
+                    </label>
+                    <input
+                      type="date"
+                      value={newBeltEntry.achievedAt}
+                      onChange={(e) => setNewBeltEntry(prev => ({ ...prev, achievedAt: e.target.value }))}
+                      className="w-full px-3 py-2 border rounded-lg dark:bg-gray-600 dark:border-gray-500 dark:text-white"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2">
                   <button
-                    onClick={saveProfile}
-                    disabled={savingProfile}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+                    onClick={addBeltHistoryEntry}
+                    disabled={savingBeltHistory || !newBeltEntry.belt || !newBeltEntry.achievedAt}
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
                   >
-                    {savingProfile ? (
-                      <>Saving...</>
-                    ) : (
-                      <>
-                        <Check size={16} /> Save Profile
-                      </>
-                    )}
+                    <Check size={16} /> Save
+                  </button>
+                  <button
+                    onClick={() => {
+                      setAddingBeltHistory(false);
+                      setNewBeltEntry({ belt: '', achievedAt: '' });
+                    }}
+                    className="px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500"
+                  >
+                    Cancel
                   </button>
                 </div>
               </div>
+            ) : (
+              <button
+                onClick={() => setAddingBeltHistory(true)}
+                className="flex items-center gap-2 px-4 py-2 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-400 hover:border-blue-500 hover:text-blue-500"
+              >
+                <Plus size={16} /> Add Belt Promotion
+              </button>
             )}
+          </div>
+
+          {/* Save Button */}
+          <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+            <button
+              onClick={saveProfile}
+              disabled={savingProfile}
+              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
+            >
+              {savingProfile ? (
+                <>Saving...</>
+              ) : (
+                <>
+                  <Check size={16} /> Save Profile
+                </>
+              )}
+            </button>
           </div>
         </div>
       </main>
-
     </div>
   );
 }

@@ -105,7 +105,7 @@ export default function Navigation() {
                 {user ? (
                   <>
                     <Link
-                      href="/profile"
+                      href="/myprogress"
                       className="flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
                     >
                       <Trophy size={20} />
@@ -139,7 +139,7 @@ export default function Navigation() {
                     )}
                     
                     <Link
-                      href="/profile?tab=edit"
+                      href="/profile"
                       className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                       title="Edit Profile"
                     >
@@ -207,7 +207,7 @@ export default function Navigation() {
             {user ? (
               <>
                 <Link
-                  href="/profile"
+                  href="/myprogress"
                   className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
                   onClick={() => setMenuOpen(false)}
                 >
@@ -228,7 +228,7 @@ export default function Navigation() {
                 )}
                 
                 <Link
-                  href="/profile?tab=edit"
+                  href="/profile"
                   className="flex items-center space-x-2 px-3 py-2 border-t border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md"
                   onClick={() => setMenuOpen(false)}
                 >

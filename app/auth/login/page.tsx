@@ -31,7 +31,7 @@ export default function LoginPage() {
         return;
       }
 
-      router.push('/profile');
+      router.push('/myprogress');
       router.refresh();
     } catch (err) {
       setError('An error occurred. Please try again.');
