@@ -95,9 +95,106 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Update user's current belt to the most recent one
+    const allHistory = await prisma.beltHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { achievedAt: 'desc' },
+      take: 1,
+    });
+    
+    if (allHistory.length > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { belt: allHistory[0].belt },
+      });
+    }
+
     return NextResponse.json({ entry });
   } catch (error) {
     console.error('Save belt history error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// PUT /api/belt-history - Edit a belt entry
+export async function PUT(request: NextRequest) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Authentication required' },
+        { status: 401 }
+      );
+    }
+
+    const body = await request.json();
+    const { id, belt, achievedAt } = body;
+
+    if (!id) {
+      return NextResponse.json(
+        { error: 'Entry ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (!belt || !VALID_BELTS.includes(belt)) {
+      return NextResponse.json(
+        { error: 'Invalid belt' },
+        { status: 400 }
+      );
+    }
+
+    if (!achievedAt) {
+      return NextResponse.json(
+        { error: 'Achievement date is required' },
+        { status: 400 }
+      );
+    }
+
+    // Verify ownership
+    const existing = await prisma.beltHistory.findFirst({
+      where: {
+        id,
+        userId: user.id,
+      },
+    });
+
+    if (!existing) {
+      return NextResponse.json(
+        { error: 'Entry not found' },
+        { status: 404 }
+      );
+    }
+
+    // Update the entry
+    const entry = await prisma.beltHistory.update({
+      where: { id },
+      data: {
+        belt,
+        achievedAt: new Date(achievedAt),
+      },
+    });
+
+    // Update user's current belt to the most recent one
+    const allHistory = await prisma.beltHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { achievedAt: 'desc' },
+      take: 1,
+    });
+    
+    if (allHistory.length > 0) {
+      await prisma.user.update({
+        where: { id: user.id },
+        data: { belt: allHistory[0].belt },
+      });
+    }
+
+    return NextResponse.json({ entry });
+  } catch (error) {
+    console.error('Edit belt history error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -143,6 +240,19 @@ export async function DELETE(request: NextRequest) {
 
     await prisma.beltHistory.delete({
       where: { id: entryId },
+    });
+
+    // Update user's current belt to the most recent one, or white if none
+    const remainingHistory = await prisma.beltHistory.findMany({
+      where: { userId: user.id },
+      orderBy: { achievedAt: 'desc' },
+      take: 1,
+    });
+    
+    const newBelt = remainingHistory.length > 0 ? remainingHistory[0].belt : 'white';
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { belt: newBelt },
     });
 
     return NextResponse.json({ success: true });

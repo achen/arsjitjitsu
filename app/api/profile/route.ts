@@ -61,12 +61,11 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, belt, isPublic, birthDate, country, city, gym } = body;
+    const { name, isPublic, birthDate, country, city, gym } = body;
 
-    // Build update data
+    // Build update data (belt is not directly editable - it's derived from belt history)
     const updateData: any = {};
     if (name !== undefined) updateData.name = name;
-    if (belt !== undefined) updateData.belt = belt;
     if (isPublic !== undefined) updateData.isPublic = isPublic;
     if (birthDate !== undefined) updateData.birthDate = birthDate ? new Date(birthDate) : null;
     if (country !== undefined) updateData.country = country || null;

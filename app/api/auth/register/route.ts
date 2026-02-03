@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create user
+    // Create user with default white belt and belt history
     const passwordHash = await hashPassword(password);
 
     const user = await prisma.user.create({
@@ -45,6 +45,12 @@ export async function POST(request: NextRequest) {
         email,
         passwordHash,
         name,
+        beltHistory: {
+          create: {
+            belt: 'white',
+            achievedAt: new Date(),
+          },
+        },
       },
     });
 
