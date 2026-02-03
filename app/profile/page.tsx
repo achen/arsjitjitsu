@@ -382,9 +382,9 @@ export default function ProfilePage() {
                 className="w-5 h-5 rounded border-gray-300 dark:border-gray-600"
               />
               <div>
-                <p className="text-gray-900 dark:text-white font-medium">Show on Leaderboard</p>
+                <p className="text-gray-900 dark:text-white font-medium">Show in Community</p>
                 <p className="text-sm text-gray-500 dark:text-gray-400">
-                  Allow your name and score to appear on the public leaderboard
+                  Allow your name and points to appear in the public community
                 </p>
               </div>
             </label>

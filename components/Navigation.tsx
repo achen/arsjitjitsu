@@ -93,7 +93,7 @@ export default function Navigation() {
             </Link>
 
             <Link
-              href="/leaderboard"
+              href="/community"
               className="flex items-center space-x-1 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200"
             >
               <Medal size={20} />
@@ -197,7 +197,7 @@ export default function Navigation() {
               <span>Techniques</span>
             </Link>
             <Link
-              href="/leaderboard"
+              href="/community"
               className="flex items-center space-x-2 px-3 py-2 rounded-md hover:bg-gray-100 dark:hover:bg-gray-700"
               onClick={() => setMenuOpen(false)}
             >

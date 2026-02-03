@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
-// GET /api/leaderboard - Get leaderboard data
+// GET /api/community - Get community data
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       where: { isPublic: true },
     });
 
-    // Build where clause for leaderboard
+    // Build where clause for community
     const whereClause: any = { isPublic: true };
     if (belt) {
       whereClause.belt = belt;
@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     });
 
     // Calculate scores and sort
-    const leaderboard = usersWithScores
+    const community = usersWithScores
       .map(user => ({
         id: user.id,
         name: user.name,
@@ -74,14 +74,14 @@ export async function GET(request: NextRequest) {
     }, {} as Record<string, number>);
 
     return NextResponse.json({
-      leaderboard,
+      community,
       totalUsers,
       totalPublicUsers,
       beltCounts: beltCountsMap,
       filteredBy: belt || null,
     });
   } catch (error) {
-    console.error('Get leaderboard error:', error);
+    console.error('Get community error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

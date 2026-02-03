@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
 import { Trophy, Users, Medal, MapPin, Building2 } from 'lucide-react';
 
-interface LeaderboardEntry {
+interface CommunityEntry {
   id: string;
   name: string;
   belt: string;
@@ -16,8 +16,8 @@ interface LeaderboardEntry {
   rank: number;
 }
 
-interface LeaderboardData {
-  leaderboard: LeaderboardEntry[];
+interface CommunityData {
+  community: CommunityEntry[];
   totalUsers: number;
   totalPublicUsers: number;
   beltCounts: Record<string, number>;
@@ -63,28 +63,28 @@ function getRankBadge(rank: number) {
   return `#${rank}`;
 }
 
-export default function LeaderboardPage() {
-  const [data, setData] = useState<LeaderboardData | null>(null);
+export default function CommunityPage() {
+  const [data, setData] = useState<CommunityData | null>(null);
   const [loading, setLoading] = useState(true);
   const [beltFilter, setBeltFilter] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchLeaderboard();
+    fetchCommunity();
   }, [beltFilter]);
 
-  const fetchLeaderboard = async () => {
+  const fetchCommunity = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
       if (beltFilter) params.set('belt', beltFilter);
       
-      const res = await fetch(`/api/leaderboard?${params}`);
+      const res = await fetch(`/api/community?${params}`);
       if (res.ok) {
         const result = await res.json();
         setData(result);
       }
     } catch (error) {
-      console.error('Fetch leaderboard error:', error);
+      console.error('Fetch community error:', error);
     } finally {
       setLoading(false);
     }
@@ -129,7 +129,7 @@ export default function LeaderboardPage() {
                   <Medal className="text-green-600 dark:text-green-400" size={24} />
                 </div>
                 <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">On Leaderboard</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">In Community</p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
                     {data.totalPublicUsers.toLocaleString()}
                   </p>
@@ -147,7 +147,7 @@ export default function LeaderboardPage() {
                     {beltFilter ? `${getBeltInfo(beltFilter).label} Belt Leaders` : 'Top Points'}
                   </p>
                   <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                    {data.leaderboard[0]?.score.toLocaleString() || 0}
+                    {data.community[0]?.score.toLocaleString() || 0}
                   </p>
                 </div>
               </div>
@@ -195,13 +195,13 @@ export default function LeaderboardPage() {
           </div>
         </div>
 
-        {/* Leaderboard Table */}
+        {/* Community Table */}
         <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-20">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
             </div>
-          ) : data?.leaderboard.length === 0 ? (
+          ) : data?.community.length === 0 ? (
             <div className="text-center py-20 text-gray-500 dark:text-gray-400">
               <Trophy size={48} className="mx-auto mb-4 opacity-50" />
               <p className="text-lg">No users in the community yet</p>
@@ -236,7 +236,7 @@ export default function LeaderboardPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {data?.leaderboard.map((entry) => {
+                  {data?.community.map((entry) => {
                     const beltInfo = getBeltInfo(entry.belt);
                     return (
                       <tr
