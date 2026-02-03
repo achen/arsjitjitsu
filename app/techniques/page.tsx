@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Navigation from '@/components/Navigation';
-import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2 } from 'lucide-react';
+import { Search, Filter, ChevronDown, ChevronUp, CheckSquare, Square, X, Star, Play, ExternalLink, MessageSquare, Plus, Trash2, Edit2, Link2, Loader2 } from 'lucide-react';
 
 interface TechniqueVideo {
   id: string;
@@ -120,6 +120,14 @@ export default function TechniquesPage() {
   
   // Admin delete video state
   const [deletingVideo, setDeletingVideo] = useState<string | null>(null);
+  
+  // Admin add video state
+  const [addingVideoToTechnique, setAddingVideoToTechnique] = useState<string | null>(null);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [videoMeta, setVideoMeta] = useState<{ title: string; instructor: string } | null>(null);
+  const [fetchingVideoMeta, setFetchingVideoMeta] = useState(false);
+  const [savingVideo, setSavingVideo] = useState(false);
+  const [addVideoError, setAddVideoError] = useState<string | null>(null);
 
   // Get unique positions from techniques for the edit dropdown
   const uniquePositions = [...new Set(techniques.map(t => t.position))].sort();
@@ -635,6 +643,133 @@ export default function TechniquesPage() {
     }
   };
 
+  // Extract YouTube video ID from URL
+  const extractYouTubeId = (url: string): string | null => {
+    const patterns = [
+      /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/)([^&\n?#]+)/,
+      /youtube\.com\/shorts\/([^&\n?#]+)/,
+    ];
+    for (const pattern of patterns) {
+      const match = url.match(pattern);
+      if (match) return match[1];
+    }
+    return null;
+  };
+
+  // Fetch YouTube video metadata using oEmbed
+  const fetchYouTubeMetadata = async (url: string) => {
+    setFetchingVideoMeta(true);
+    setAddVideoError(null);
+    setVideoMeta(null);
+
+    try {
+      const videoId = extractYouTubeId(url);
+      if (!videoId) {
+        setAddVideoError('Invalid YouTube URL');
+        return;
+      }
+
+      // Use YouTube oEmbed API (no API key needed)
+      const oembedUrl = `https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`;
+      const res = await fetch(oembedUrl);
+      
+      if (!res.ok) {
+        setAddVideoError('Could not fetch video info');
+        return;
+      }
+
+      const data = await res.json();
+      setVideoMeta({
+        title: data.title || '',
+        instructor: data.author_name || '',
+      });
+    } catch (error) {
+      console.error('Fetch YouTube metadata error:', error);
+      setAddVideoError('Failed to fetch video info');
+    } finally {
+      setFetchingVideoMeta(false);
+    }
+  };
+
+  // Handle URL paste/change
+  const handleVideoUrlChange = (url: string) => {
+    setVideoUrl(url);
+    setAddVideoError(null);
+    
+    // Auto-fetch metadata when a valid YouTube URL is detected
+    if (url && (url.includes('youtube.com') || url.includes('youtu.be'))) {
+      fetchYouTubeMetadata(url);
+    } else {
+      setVideoMeta(null);
+    }
+  };
+
+  // Open add video modal
+  const openAddVideoModal = (techniqueId: string) => {
+    setAddingVideoToTechnique(techniqueId);
+    setVideoUrl('');
+    setVideoMeta(null);
+    setAddVideoError(null);
+  };
+
+  // Close add video modal
+  const closeAddVideoModal = () => {
+    setAddingVideoToTechnique(null);
+    setVideoUrl('');
+    setVideoMeta(null);
+    setAddVideoError(null);
+  };
+
+  // Save video to technique
+  const saveVideoToTechnique = async () => {
+    if (!addingVideoToTechnique || !videoUrl || !videoMeta) return;
+
+    setSavingVideo(true);
+    setAddVideoError(null);
+
+    try {
+      const res = await fetch('/api/admin/videos/map', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          techniqueId: addingVideoToTechnique,
+          title: videoMeta.title,
+          url: videoUrl,
+          instructor: videoMeta.instructor,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        // Update local state to add the video
+        setTechniques(prev => prev.map(t => {
+          if (t.id === addingVideoToTechnique) {
+            return {
+              ...t,
+              videos: [...t.videos, {
+                id: data.video.id,
+                title: data.video.title,
+                url: data.video.url,
+                instructor: data.video.instructor,
+                duration: data.video.duration,
+              }],
+            };
+          }
+          return t;
+        }));
+        closeAddVideoModal();
+      } else {
+        const errData = await res.json();
+        setAddVideoError(errData.error || 'Failed to save video');
+      }
+    } catch (error) {
+      console.error('Save video error:', error);
+      setAddVideoError('Failed to save video');
+    } finally {
+      setSavingVideo(false);
+    }
+  };
+
   const getRatingColor = (rating: number | null) => {
     if (rating === null || rating === 0) return 'bg-gray-100 dark:bg-gray-700';
     if (rating === 1) return 'bg-gray-200 dark:bg-gray-600';
@@ -1011,6 +1146,16 @@ export default function TechniquesPage() {
                               >
                                 <Edit2 size={12} />
                                 Edit
+                              </button>
+                            )}
+                            {/* Admin Add Video button */}
+                            {user?.isAdmin && (
+                              <button
+                                onClick={() => openAddVideoModal(technique.id)}
+                                className="flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-200 hover:bg-green-200 dark:hover:bg-green-800"
+                              >
+                                <Link2 size={12} />
+                                Add Video
                               </button>
                             )}
                           </div>
@@ -1395,6 +1540,105 @@ export default function TechniquesPage() {
                   className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   {savingCreate ? 'Creating...' : 'Create Technique'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Video Modal */}
+      {addingVideoToTechnique && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-xl max-w-lg w-full">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Add Video
+                </h2>
+                <button
+                  onClick={closeAddVideoModal}
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              {addVideoError && (
+                <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                  {addVideoError}
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    YouTube URL
+                  </label>
+                  <input
+                    type="text"
+                    value={videoUrl}
+                    onChange={(e) => handleVideoUrlChange(e.target.value)}
+                    placeholder="Paste YouTube URL here..."
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+
+                {fetchingVideoMeta && (
+                  <div className="flex items-center gap-2 text-gray-500 dark:text-gray-400">
+                    <Loader2 size={16} className="animate-spin" />
+                    Fetching video info...
+                  </div>
+                )}
+
+                {videoMeta && (
+                  <div className="p-4 bg-gray-50 dark:bg-gray-700 rounded-lg space-y-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Title
+                      </label>
+                      <input
+                        type="text"
+                        value={videoMeta.title}
+                        onChange={(e) => setVideoMeta(prev => prev ? { ...prev, title: e.target.value } : null)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Instructor / Channel
+                      </label>
+                      <input
+                        type="text"
+                        value={videoMeta.instructor}
+                        onChange={(e) => setVideoMeta(prev => prev ? { ...prev, instructor: e.target.value } : null)}
+                        className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="mt-6 flex justify-end gap-3">
+                <button
+                  onClick={closeAddVideoModal}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveVideoToTechnique}
+                  disabled={savingVideo || !videoUrl || !videoMeta}
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                >
+                  {savingVideo ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Add Video'
+                  )}
                 </button>
               </div>
             </div>
